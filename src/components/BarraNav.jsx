@@ -10,7 +10,7 @@ export default function BarraNav() {
           <li>Catalogo</li>
           <li>Hacer Pedido</li>
           <li>Contacto</li>
-          <li>Mi cuenta</li>
+          <li>Iniciar Sesion</li>
       </ul>
     </nav>
   );
