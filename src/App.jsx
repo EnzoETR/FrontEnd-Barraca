@@ -8,6 +8,7 @@ import Catalogo from "./pages/Catalogo";
 import Pedido from "./pages/Pedido";
 import Contacto from "./pages/Contacto";
 import MiCuenta from "./pages/MiCuenta";
+import AdminPedidos from "./pages/Admin-pedidos";
 
 function App() {
   return (
@@ -21,6 +22,9 @@ function App() {
         <Route path="/pedido" element={<Pedido />} />
         <Route path="/contacto" element={<Contacto />} />
         <Route path="/micuenta" element={<MiCuenta />} />
+
+        {/*ADMIN*/}
+        <Route path="/admin/pedidos" element={<AdminPedidos />} />
       </Routes>
 
        <Footer />
