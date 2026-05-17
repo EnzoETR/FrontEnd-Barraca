@@ -41,7 +41,7 @@ console.log(data);
     }
 
     return (
-        <div className="min-h-screen bg-gray-100 p-8">
+        <div>
 
             <div className="max-w-7xl mx-auto">
 

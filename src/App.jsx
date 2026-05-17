@@ -1,36 +1,68 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import BarraNav from "./components/BarraNav";
-import Footer from "./components/Footer";
+import MainLayout from "./layouts/MainLayout";
+import AdminLayout from "./layouts/AdminLayout";
 
 import Inicio from "./pages/Inicio";
 import Catalogo from "./pages/Catalogo";
 import Pedido from "./pages/Pedido";
 import Contacto from "./pages/Contacto";
 import MiCuenta from "./pages/MiCuenta";
+
 import AdminPedidos from "./pages/Admin-pedidos";
 
 function App() {
-  return (
-    <BrowserRouter>
 
-      <BarraNav />
+    return (
 
-      <Routes>
-        <Route path="/" element={<Inicio />} />
-        <Route path="/catalogo" element={<Catalogo />} />
-        <Route path="/pedido" element={<Pedido />} />
-        <Route path="/contacto" element={<Contacto />} />
-        <Route path="/micuenta" element={<MiCuenta />} />
+        <BrowserRouter>
 
-        {/*ADMIN*/}
-        <Route path="/admin/pedidos" element={<AdminPedidos />} />
-      </Routes>
+            <Routes>
 
-       <Footer />
+                {/* PAGINAS NORMALES */}
+                <Route element={<MainLayout />}>
 
-    </BrowserRouter>
-  );
+                    <Route path="/" element={<Inicio />} />
+
+                    <Route
+                        path="/catalogo"
+                        element={<Catalogo />}
+                    />
+
+                    <Route
+                        path="/pedido"
+                        element={<Pedido />}
+                    />
+
+                    <Route
+                        path="/contacto"
+                        element={<Contacto />}
+                    />
+
+                    <Route
+                        path="/micuenta"
+                        element={<MiCuenta />}
+                    />
+
+                </Route>
+
+                {/* ADMIN */}
+                <Route
+                    path="/admin"
+                    element={<AdminLayout />}
+                >
+
+                    <Route
+                        path="pedidos"
+                        element={<AdminPedidos />}
+                    />
+
+                </Route>
+
+            </Routes>
+
+        </BrowserRouter>
+    );
 }
 
 export default App;
