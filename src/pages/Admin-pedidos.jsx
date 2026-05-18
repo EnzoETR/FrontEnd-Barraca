@@ -5,8 +5,15 @@ function AdminPedidos() {
     const [pedidos, setPedidos] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const [estados, setEstados] = useState([]);
+
+    const [estadoSeleccionado, setEstadoSeleccionado] = useState({});
+
     useEffect(() => {
+
         obtenerPedidos();
+        obtenerEstados();
+
     }, []);
 
     const obtenerPedidos = async () => {
@@ -18,7 +25,8 @@ function AdminPedidos() {
             );
 
             const data = await response.json();
-console.log(data);
+
+            console.log(data);
 
             setPedidos(data);
 
@@ -32,7 +40,73 @@ console.log(data);
         }
     };
 
+    const obtenerEstados = async () => {
+
+        try {
+
+            const response = await fetch(
+                "http://localhost:8081/api/v1/estados/listarEstados"
+            );
+
+            const data = await response.json();
+
+            console.log(data);
+
+            setEstados(data);
+
+        } catch (error) {
+
+            console.error("Error al obtener estados:", error);
+        }
+    };
+
+    const actualizarEstadoPedido = async (idPedido) => {
+
+        try {
+
+            const idEstado = estadoSeleccionado[idPedido];
+
+            if (!idEstado) {
+
+                alert("Selecciona un estado");
+
+                return;
+            }
+
+            const response = await fetch(
+                `http://localhost:8081/api/v1/pedidos/actualizarEstadoPedido/${idPedido}`,
+                {
+                    method: "PUT",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        idEstado: Number(idEstado)
+                    })
+                }
+            );
+
+            if (!response.ok) {
+
+                throw new Error("Error al actualizar estado");
+            }
+
+            alert("Estado actualizado correctamente");
+
+            obtenerPedidos();
+
+        } catch (error) {
+
+            console.error(error);
+
+            alert("Error al actualizar estado");
+        }
+    };
+
     if (loading) {
+
         return (
             <div className="p-10 text-xl">
                 Cargando pedidos...
@@ -41,6 +115,7 @@ console.log(data);
     }
 
     return (
+
         <div>
 
             <div className="max-w-7xl mx-auto">
@@ -54,6 +129,7 @@ console.log(data);
                     <div className="bg-white px-4 py-2 rounded-lg shadow">
                         Total pedidos: {pedidos.length}
                     </div>
+
                 </div>
 
                 <div className="grid gap-6">
@@ -62,13 +138,32 @@ console.log(data);
 
                         <div
                             key={pedido.idPedido}
-                            className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200"
+                            className="
+                                bg-white
+                                rounded-2xl
+                                shadow-lg
+                                overflow-hidden
+                                border
+                                border-gray-200
+                            "
                         >
 
                             {/* HEADER */}
-                            <div className="bg-gray-800 text-white p-5 flex flex-col md:flex-row md:justify-between md:items-center">
+                            <div
+                                className="
+                                    bg-gray-800
+                                    text-white
+                                    p-5
+                                    flex
+                                    flex-col
+                                    md:flex-row
+                                    md:justify-between
+                                    md:items-center
+                                "
+                            >
 
                                 <div>
+
                                     <h2 className="text-2xl font-bold">
                                         Pedido #{pedido.idPedido}
                                     </h2>
@@ -76,27 +171,92 @@ console.log(data);
                                     <p className="text-gray-300 mt-1">
                                         Cliente: {pedido.nombreCliente}
                                     </p>
+
                                 </div>
 
                                 <div className="mt-4 md:mt-0 text-right">
 
-                                    <span className="
-                                        inline-block
-                                        bg-yellow-400
-                                        text-black
-                                        px-3
-                                        py-1
-                                        rounded-full
-                                        text-sm
-                                        font-semibold
-                                    ">
+                                    <span
+                                        className="
+                                            inline-block
+                                            bg-yellow-400
+                                            text-black
+                                            px-3
+                                            py-1
+                                            rounded-full
+                                            text-sm
+                                            font-semibold
+                                        "
+                                    >
                                         {pedido.estado}
                                     </span>
 
                                     <p className="mt-2 text-lg font-bold">
                                         ${pedido.precioTotal}
                                     </p>
+
+                                    {/* ACTUALIZAR ESTADO */}
+                                    <div className="mt-4 flex gap-2">
+
+                                        <select
+                                            value={
+                                                estadoSeleccionado[pedido.idPedido]
+                                                || ""
+                                            }
+                                            onChange={(e) =>
+                                                setEstadoSeleccionado({
+                                                    ...estadoSeleccionado,
+                                                    [pedido.idPedido]:
+                                                        e.target.value
+                                                })
+                                            }
+                                            className="
+                                                text-black
+                                                rounded-lg
+                                                px-3
+                                                py-2
+                                            "
+                                        >
+
+                                            <option value="">
+                                                Cambiar estado
+                                            </option>
+
+                                            {estados.map((estado) => (
+
+                                                <option
+                                                    key={estado.idEstado}
+                                                    value={estado.idEstado}
+                                                >
+                                                    {estado.estado}
+                                                </option>
+
+                                            ))}
+
+                                        </select>
+
+                                        <button
+                                            onClick={() =>
+                                                actualizarEstadoPedido(
+                                                    pedido.idPedido
+                                                )
+                                            }
+                                            className="
+                                                bg-blue-500
+                                                hover:bg-blue-600
+                                                px-4
+                                                py-2
+                                                rounded-lg
+                                                font-semibold
+                                            "
+                                        >
+                                            Actualizar
+                                        </button>
+
+                                    </div>
+
                                 </div>
+
                             </div>
 
                             {/* BODY */}
@@ -105,7 +265,14 @@ console.log(data);
                                 {/* INFO */}
                                 <div>
 
-                                    <h3 className="text-lg font-semibold mb-4 text-gray-700">
+                                    <h3
+                                        className="
+                                            text-lg
+                                            font-semibold
+                                            mb-4
+                                            text-gray-700
+                                        "
+                                    >
                                         Información del pedido
                                     </h3>
 
@@ -154,12 +321,20 @@ console.log(data);
                                         </p>
 
                                     </div>
+
                                 </div>
 
                                 {/* DETALLES */}
                                 <div>
 
-                                    <h3 className="text-lg font-semibold mb-4 text-gray-700">
+                                    <h3
+                                        className="
+                                            text-lg
+                                            font-semibold
+                                            mb-4
+                                            text-gray-700
+                                        "
+                                    >
                                         Productos
                                     </h3>
 
@@ -177,18 +352,31 @@ console.log(data);
                                                 "
                                             >
 
-                                                <div className="flex justify-between items-start">
+                                                <div
+                                                    className="
+                                                        flex
+                                                        justify-between
+                                                        items-start
+                                                    "
+                                                >
 
                                                     <div>
 
-                                                        <h4 className="font-bold text-lg">
+                                                        <h4
+                                                            className="
+                                                                font-bold
+                                                                text-lg
+                                                            "
+                                                        >
                                                             {detalle.nombreProducto}
                                                         </h4>
 
                                                         <p className="text-gray-500">
+
                                                             Presentación:
                                                             {" "}
                                                             {detalle.nombrePresentacion}
+
                                                         </p>
 
                                                     </div>
@@ -199,21 +387,37 @@ console.log(data);
                                                             x{detalle.cantidad}
                                                         </p>
 
-                                                        <p className="text-green-600 font-bold">
+                                                        <p
+                                                            className="
+                                                                text-green-600
+                                                                font-bold
+                                                            "
+                                                        >
                                                             ${detalle.subtotal}
                                                         </p>
 
                                                     </div>
+
                                                 </div>
+
                                             </div>
+
                                         ))}
+
                                     </div>
+
                                 </div>
+
                             </div>
+
                         </div>
+
                     ))}
+
                 </div>
+
             </div>
+
         </div>
     );
 }
