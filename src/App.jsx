@@ -10,6 +10,7 @@ import Contacto from "./pages/Contacto";
 import MiCuenta from "./pages/MiCuenta";
 
 import AdminPedidos from "./pages/Admin-pedidos";
+import AdminCrearPedidos from "./pages/Admin-crearPedido";
 
 function App() {
 
@@ -55,6 +56,11 @@ function App() {
                     <Route
                         path="pedidos"
                         element={<AdminPedidos />}
+                    />
+
+                    <Route
+                        path="crearPedido"
+                        element={<AdminCrearPedidos />}
                     />
 
                 </Route>
