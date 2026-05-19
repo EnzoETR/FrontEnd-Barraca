@@ -13,6 +13,7 @@ import MiCuenta from "./pages/MiCuenta";
 
 import AdminPedidos from "./pages/Admin-pedidos";
 import AdminCrearPedidos from "./pages/Admin-crearPedido";
+import Carrito from "./pages/Carrito.jsx";
 
 function App() {
   return (
@@ -25,6 +26,8 @@ function App() {
             <Route path="/pedido" element={<Pedido />} />
             <Route path="/contacto" element={<Contacto />} />
             <Route path="/micuenta" element={<MiCuenta />} />
+              <Route path="/carrito" element={<Carrito />} />
+
           </Route>
 
           <Route

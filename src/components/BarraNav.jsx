@@ -29,6 +29,9 @@ export default function BarraNav() {
           <li>
             <Link to="/contacto">Contacto</Link>
           </li>
+            <li>
+            <Link to="/carrito">Carrito</Link>
+          </li>
           {esAdmin() && (
             <li>
               <Link to="/admin/pedidos">Admin</Link>
