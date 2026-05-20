@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { apiFetch } from "../services/apiClient";
 
 function AdminPedidos() {
 
@@ -20,9 +21,7 @@ function AdminPedidos() {
 
         try {
 
-            const response = await fetch(
-                "http://localhost:8081/api/v1/pedidos/listarPedidos"
-            );
+            const response = await apiFetch("/api/v1/pedidos/listarPedidos");
 
             const data = await response.json();
 
@@ -44,9 +43,7 @@ function AdminPedidos() {
 
         try {
 
-            const response = await fetch(
-                "http://localhost:8081/api/v1/estados/listarEstados"
-            );
+            const response = await apiFetch("/api/v1/estados/listarEstados");
 
             const data = await response.json();
 
@@ -73,15 +70,10 @@ function AdminPedidos() {
                 return;
             }
 
-            const response = await fetch(
-                `http://localhost:8081/api/v1/pedidos/actualizarEstadoPedido/${idPedido}`,
+            const response = await apiFetch(
+                `/api/v1/pedidos/actualizarEstadoPedido/${idPedido}`,
                 {
                     method: "PUT",
-
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-
                     body: JSON.stringify({
                         idEstado: Number(idEstado)
                     })

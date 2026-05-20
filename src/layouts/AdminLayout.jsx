@@ -1,45 +1,58 @@
-import { Outlet, Link } from "react-router-dom";
+import { Outlet, Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 function AdminLayout() {
+  const { usuario, logout } = useAuth();
+  const navigate = useNavigate();
 
-    return (
+  function cerrarSesion() {
+    logout();
+    navigate("/micuenta");
+  }
 
-        <div className="min-h-screen flex bg-gray-100">
+  return (
+    <div className="min-h-screen flex bg-gray-100">
+      <aside className="w-64 bg-gray-900 text-white p-6 flex flex-col">
+        <h2 className="text-2xl font-bold mb-2">Admin</h2>
+        {usuario?.nombre && (
+          <p className="text-sm text-gray-400 mb-8">{usuario.nombre}</p>
+        )}
 
-            {/* SIDEBAR */}
-            <aside className="w-64 bg-gray-900 text-white p-6">
+        <nav className="space-y-3 flex-1">
+          <Link
+            to="/admin/pedidos"
+            className="block p-3 rounded-lg hover:bg-gray-800"
+          >
+            Pedidos
+          </Link>
+          <Link
+            to="/admin/crearPedido"
+            className="block p-3 rounded-lg hover:bg-gray-800"
+          >
+            Crear pedido
+          </Link>
+          <Link
+            to="/catalogo"
+            className="block p-3 rounded-lg hover:bg-gray-800 text-gray-300"
+          >
+            Volver al sitio
+          </Link>
+        </nav>
 
-                <h2 className="text-2xl font-bold mb-8">
-                    Admin
-                </h2>
+        <button
+          type="button"
+          onClick={cerrarSesion}
+          className="mt-4 p-3 rounded-lg bg-red-700 hover:bg-red-600 text-left"
+        >
+          Cerrar sesión
+        </button>
+      </aside>
 
-                <nav className="space-y-3">
-
-                    <Link
-                        to="/admin/pedidos"
-                        className="block p-3 rounded-lg hover:bg-gray-800"
-                    >
-                        Pedidos
-                    </Link>
-
-                    <Link
-                   to="/admin/crearPedido"
-                   className="block p-3 rounded-lg hover:bg-gray-800"
-                   >
-                   Crear pedido
-                    </Link>
-
-                </nav>
-
-            </aside>
-
-            {/* CONTENIDO */}
-            <main className="flex-1 p-6">
-                <Outlet />
-            </main>
-
-        </div>
-    );
+      <main className="flex-1 p-6">
+        <Outlet />
+      </main>
+    </div>
+  );
 }
 
 export default AdminLayout;

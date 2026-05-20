@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { apiFetch } from "../services/apiClient";
 
 function CrearPedido() {
 
@@ -58,18 +59,10 @@ function CrearPedido() {
 
         try {
 
-            const response = await fetch(
-                "http://localhost:8081/api/v1/pedidos/crearPedido",
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-
-                    body: JSON.stringify(pedido)
-                }
-            );
+            const response = await apiFetch("/api/v1/pedidos/crearPedido", {
+                method: "POST",
+                body: JSON.stringify(pedido)
+            });
 
             if (!response.ok) {
                 throw new Error("Error al crear pedido");
