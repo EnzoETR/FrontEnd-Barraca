@@ -13,6 +13,7 @@ import MiCuenta from "./pages/MiCuenta";
 
 import AdminPedidos from "./pages/Admin-pedidos";
 import AdminCrearPedidos from "./pages/Admin-crearPedido";
+import AdminProductos from "./pages/Admin-productos";
 
 function App() {
   return (
@@ -38,6 +39,7 @@ function App() {
             <Route index element={<AdminPedidos />} />
             <Route path="pedidos" element={<AdminPedidos />} />
             <Route path="crearPedido" element={<AdminCrearPedidos />} />
+            <Route path="productos" element={<AdminProductos />} />
           </Route>
         </Routes>
       </BrowserRouter>
