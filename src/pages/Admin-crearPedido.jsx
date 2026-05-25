@@ -89,7 +89,7 @@ const fechaMinima =
         ahora.getTime() - ahora.getTimezoneOffset() * 60000
     )
     .toISOString()
-    .slice(0, 16);
+    .slice(0, 10);
     return (
 
         <div className="max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow">
@@ -111,7 +111,7 @@ const fechaMinima =
                     </label>
 
                     <input
-                        type="datetime-local"
+                        type="date"
                         name="fechaEntrega"
                         value={pedido.fechaEntrega}
                         onChange={handleChange}

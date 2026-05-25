@@ -13,7 +13,7 @@ import MiCuenta from "./pages/MiCuenta";
 
 import AdminPedidos from "./pages/Admin-pedidos";
 import AdminCrearPedidos from "./pages/Admin-crearPedido";
-import Carrito from "./pages/Carrito.jsx";
+import AdminProductos from "./pages/Admin-productos";
 
 function App() {
   return (
@@ -26,8 +26,6 @@ function App() {
             <Route path="/pedido" element={<Pedido />} />
             <Route path="/contacto" element={<Contacto />} />
             <Route path="/micuenta" element={<MiCuenta />} />
-              <Route path="/carrito" element={<Carrito />} />
-
           </Route>
 
           <Route
@@ -41,6 +39,7 @@ function App() {
             <Route index element={<AdminPedidos />} />
             <Route path="pedidos" element={<AdminPedidos />} />
             <Route path="crearPedido" element={<AdminCrearPedidos />} />
+            <Route path="productos" element={<AdminProductos />} />
           </Route>
         </Routes>
       </BrowserRouter>

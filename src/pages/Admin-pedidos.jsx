@@ -16,7 +16,7 @@ function AdminPedidos() {
         obtenerEstados();
 
     }, []);
-
+//commit
     const obtenerPedidos = async () => {
 
         try {
@@ -108,7 +108,7 @@ function AdminPedidos() {
 
     return (
 
-        <div>
+        <div className="h-screen overflow-hidden">
 
             <div className="max-w-7xl mx-auto">
 
@@ -124,7 +124,7 @@ function AdminPedidos() {
 
                 </div>
 
-                <div className="grid gap-6">
+                <div className="grid gap-6  max-h-screen overflow-y-auto pr-2 pb-20 min-h-0 flex-1">
 
                     {pedidos.map((pedido) => (
 
@@ -132,7 +132,6 @@ function AdminPedidos() {
                             key={pedido.idPedido}
                             className="
                                 bg-white
-                                rounded-2xl
                                 shadow-lg
                                 overflow-hidden
                                 border
@@ -175,7 +174,6 @@ function AdminPedidos() {
                                             text-black
                                             px-3
                                             py-1
-                                            rounded-full
                                             text-sm
                                             font-semibold
                                         "
@@ -184,6 +182,7 @@ function AdminPedidos() {
                                     </span>
 
                                     <p className="mt-2 text-lg font-bold">
+                                        Total:
                                         ${pedido.precioTotal}
                                     </p>
 
@@ -214,11 +213,17 @@ function AdminPedidos() {
                                                 Cambiar estado
                                             </option>
 
-                                            {estados.map((estado) => (
+                                            {estados.filter(
+                                                            (estado) =>
+                                                                estado.id !== pedido.idEstado
+                                                        ).map((estado) => (
 
                                                 <option
                                                     key={estado.idEstado}
-                                                    value={estado.idEstado}
+                                                    value={estado.id}
+                                                    disabled={
+                                                            estado.id === pedido.idEstado
+                                                        }
                                                 >
                                                     {estado.estado}
                                                 </option>
@@ -338,7 +343,6 @@ function AdminPedidos() {
                                                 key={detalle.idDetalle}
                                                 className="
                                                     border
-                                                    rounded-xl
                                                     p-4
                                                     bg-gray-50
                                                 "
@@ -368,7 +372,8 @@ function AdminPedidos() {
                                                             Presentación:
                                                             {" "}
                                                             {detalle.nombrePresentacion}
-
+                                                            {" "}-{" "}
+                                                            {detalle.cantidadPresentacion}kg
                                                         </p>
 
                                                     </div>
@@ -385,6 +390,7 @@ function AdminPedidos() {
                                                                 font-bold
                                                             "
                                                         >
+                                                        Subtotal:
                                                             ${detalle.subtotal}
                                                         </p>
 

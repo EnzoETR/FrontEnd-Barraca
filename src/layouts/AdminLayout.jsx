@@ -32,6 +32,12 @@ function AdminLayout() {
             Crear pedido
           </Link>
           <Link
+                      to="/admin/productos"
+                      className="block p-3 rounded-lg hover:bg-gray-800"
+                    >
+                      Productos
+                    </Link>
+          <Link
             to="/catalogo"
             className="block p-3 rounded-lg hover:bg-gray-800 text-gray-300"
           >
