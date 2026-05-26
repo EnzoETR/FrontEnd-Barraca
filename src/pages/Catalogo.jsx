@@ -1,71 +1,84 @@
-
 import FichaPresentacion from "../components/fichaPresentacion.jsx";
-import {useState} from "react";
-import {apiFetch} from "../services/apiClient.js";
-import {useEffect} from "react";
-
-
+import { useState, useEffect } from "react";
+import { apiFetch } from "../services/apiClient.js";
 
 export default function Catalogo() {
-
     const [presentacion, setPresentacion] = useState([]);
+    const [imagenes, setImagenes] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        obtenerPresentaciones()
-
-
+        obtenerPresentaciones();
+        obtenerImagenes();
     }, []);
 
     const obtenerPresentaciones = async () => {
-
         try {
-
             const response = await apiFetch("/api/v1/presentacion/listarPresentacion");
-
             const data = await response.json();
 
             console.log(data);
 
             setPresentacion(data);
-
         } catch (error) {
-
             console.error("Error al obtener presentaciones:", error);
-
         } finally {
-
             setLoading(false);
         }
     };
 
-  return (
-    <div className="min-h-screen flex flex-col">
-      <main className="flex-grow p-6">
+    const obtenerImagenes = async () => {
+        try {
+            const response = await apiFetch("/api/v1/imagenProducto/listarImagenes");
+            const data = await response.json();
 
-         <select>
-             <option>Nombre</option>
-             <option>Precio</option>
-         </select>
+            setImagenes(data);
+        } catch (error) {
+            console.error("Error al obtener imágenes:", error);
+        }
+    };
 
-          <input
-          type="text"
-          placeholder="Leña de Barra"
-          />
+    const obtenerImagenPresentacion = (idPresentacion) => {
+        return imagenes.find(
+            (imagen) => Number(imagen.idPresentacion) === Number(idPresentacion)
+        );
+    };
 
+    if (loading) {
+        return <div className="p-10 text-xl">Cargando catálogo...</div>;
+    }
 
-          <div className="flex flex-wrap gap-10 justify-center mt-10">
-              {presentacion.map((presentacion) => (
+    return (
+        <div className="min-h-screen flex flex-col">
+            <main className="flex-grow p-6">
 
-                  <FichaPresentacion
-                      key={presentacion.id}
-                      presentacion={presentacion}
-                  />
+                <select>
+                    <option>Nombre</option>
+                    <option>Precio</option>
+                </select>
 
-              ))}
-          </div>
+                <input
+                    type="text"
+                    placeholder="Leña de Barra"
+                />
 
-      </main>
-    </div>
-  );
+                <div className="flex flex-wrap gap-10 justify-center mt-10">
+                    {presentacion.map((presentacion) => {
+                        const imagenPresentacion = obtenerImagenPresentacion(
+                            presentacion.id
+                        );
+
+                        return (
+                            <FichaPresentacion
+                                key={presentacion.id}
+                                presentacion={presentacion}
+                                imagenProducto={imagenPresentacion}
+                            />
+                        );
+                    })}
+                </div>
+
+            </main>
+        </div>
+    );
 }

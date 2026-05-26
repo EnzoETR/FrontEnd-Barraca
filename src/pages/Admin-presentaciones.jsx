@@ -5,6 +5,7 @@ function AdminPresentaciones() {
     const [presentaciones, setPresentaciones] = useState([]);
     const [productos, setProductos] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [idPresentacionImagen, setIdPresentacionImagen] = useState(null);
 
     const [nuevaPresentacion, setNuevaPresentacion] = useState({
         descripcion: "",
@@ -12,6 +13,15 @@ function AdminPresentaciones() {
         unidadMedida: "",
         precio: "",
         idProducto: ""
+    });
+
+    const [imagenProducto, setImagenProducto] = useState({
+        nombre: "",
+        extension: "",
+        imagen: "",
+        esPrincipal: false,
+        idProducto: "",
+        idPresentacion: ""
     });
 
     useEffect(() => {
@@ -65,10 +75,18 @@ function AdminPresentaciones() {
                 idProducto: ""
             });
 
+            const data = await response.json();
+
+            alert("Presentación creada correctamente");
+
             obtenerPresentaciones();
+
+            return data;
+
         } catch (error) {
             console.error(error);
             alert("Error al crear presentación");
+            return false;
         }
     };
 
@@ -88,6 +106,8 @@ function AdminPresentaciones() {
             if (!response.ok) {
                 throw new Error("Error al actualizar presentación");
             }
+
+            await subirImagen(presentacion);
 
             alert("Presentación actualizada");
             obtenerPresentaciones();
@@ -132,6 +152,97 @@ function AdminPresentaciones() {
                     : presentacion
             )
         );
+    };
+
+    const convertirABase64 = (archivo) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+
+            reader.readAsDataURL(archivo);
+
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = (error) => reject(error);
+        });
+    };
+
+    const manejarImagen = async (e) => {
+        const archivo = e.target.files[0];
+
+        if (!archivo) return;
+
+        const base64 = await convertirABase64(archivo);
+
+        setImagenProducto({
+            ...imagenProducto,
+            nombre: archivo.name,
+            extension: archivo.type,
+            imagen: base64
+        });
+    };
+
+    const subirImagen = async (presentacion) => {
+        try {
+            if (!imagenProducto.imagen) {
+                return true;
+            }
+
+            if (
+                idPresentacionImagen !== null &&
+                idPresentacionImagen !== presentacion.id
+            ) {
+                return true;
+            }
+
+            const imagenParaEnviar = {
+                ...imagenProducto,
+                idProducto: presentacion.idProducto,
+                idPresentacion: presentacion.id
+            };
+
+            const response = await apiFetch(
+                "/api/v1/imagenProducto/crearImagen",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(imagenParaEnviar)
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error("Error al subir imagen");
+            }
+
+            alert("Imagen subida correctamente");
+
+            setImagenProducto({
+                nombre: "",
+                extension: "",
+                imagen: "",
+                esPrincipal: false,
+                idProducto: "",
+                idPresentacion: ""
+            });
+
+            setIdPresentacionImagen(null);
+
+            return true;
+        } catch (error) {
+            console.error(error);
+            alert("Error al subir imagen");
+            return false;
+        }
+    };
+
+    const crearPresentacionCompleta = async () => {
+        const presentacionCreada = await crearPresentacion();
+
+        if (!presentacionCreada) {
+            return;
+        }
+
+        await subirImagen(presentacionCreada);
     };
 
     if (loading) {
@@ -208,12 +319,17 @@ function AdminPresentaciones() {
 
                     <select
                         value={nuevaPresentacion.idProducto}
-                        onChange={(e) =>
+                        onChange={(e) => {
                             setNuevaPresentacion({
                                 ...nuevaPresentacion,
                                 idProducto: e.target.value
-                            })
-                        }
+                            });
+
+                            setImagenProducto({
+                                ...imagenProducto,
+                                idProducto: e.target.value
+                            });
+                        }}
                         className="border p-3 rounded-lg"
                     >
                         <option value="">Producto</option>
@@ -224,8 +340,16 @@ function AdminPresentaciones() {
                         ))}
                     </select>
 
+                    <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                            manejarImagen(e);
+                        }}
+                    />
+
                     <button
-                        onClick={crearPresentacion}
+                        onClick={crearPresentacionCompleta}
                         className="bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg px-4 py-3"
                     >
                         Crear
@@ -273,6 +397,13 @@ function AdminPresentaciones() {
                                 onChange={(e) =>
                                     manejarCambio(presentacion.id, "precio", e.target.value)
                                 }
+                                className="border p-3 rounded-lg"
+                            />
+
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={manejarImagen}
                                 className="border p-3 rounded-lg"
                             />
 
