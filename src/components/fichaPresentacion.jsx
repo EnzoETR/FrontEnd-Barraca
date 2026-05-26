@@ -10,20 +10,45 @@ export default function FichaPresentacion({ presentacion }) {
     );
 
     const agregarAlCarrito = (presentacion) => {
-        const carritoActual = JSON.parse(localStorage.getItem("carrito")) || [];
 
-        const nuevoCarrito = [
-            ...carritoActual,
-            {
-                id: presentacion.id,
+        let carritoActual =
+            JSON.parse(localStorage.getItem("carrito")) || [];
+
+        const productoExistente = carritoActual.find(
+            (item) =>
+                item.idPresentacion ===
+                presentacion.id
+        );
+
+        if (productoExistente) {
+
+            productoExistente.cantidad += 1;
+
+            productoExistente.subtotal =
+                productoExistente.cantidad *
+                productoExistente.precio;
+
+        } else {
+
+            carritoActual.push({
+                idPresentacion: presentacion.id,
                 descripcion: presentacion.descripcion,
                 precio: presentacion.precio,
-                cantidad: 1
-            }
-        ];
+                cantidad: 1,
+                subtotal: presentacion.precio
+            });
+        }
 
-        localStorage.setItem("carrito", JSON.stringify(nuevoCarrito));
-        setCarrito(nuevoCarrito);
+console.log(
+    "PRODUCTO AGREGADO -> ",
+    carritoActual
+);
+        localStorage.setItem(
+            "carrito",
+            JSON.stringify(carritoActual)
+        );
+
+        setCarrito(carritoActual);
 
         navigate("/carrito");
     };
@@ -31,18 +56,18 @@ export default function FichaPresentacion({ presentacion }) {
     const eliminarDelCarrito = (id) => {
         const carritoActual = JSON.parse(localStorage.getItem("carrito")) || [];
 
-        const nuevoCarrito = carritoActual.filter((item) => item.id !== id);
+        const nuevoCarrito = carritoActual.filter((item) => item.idPresentacion !== id);
 
         localStorage.setItem("carrito", JSON.stringify(nuevoCarrito));
         setCarrito(nuevoCarrito);
     };
 
     const estaEnCarrito = carrito.some(
-        (item) => item.id === presentacion.id
+        (item) => item.idPresentacion === presentacion.id
     );
 
     return (
-        <div className="bg-[#e9e9e9] w-[160px] p-3 flex flex-col items-center shadow-md">
+        <div className="bg-[#e9e9e9] w-[250px] p-3 flex flex-col items-center shadow-md">
             <div className="w-full h-[12px] bg-orange-500 mb-[-12px] z-10"></div>
 
             <img
@@ -58,6 +83,9 @@ export default function FichaPresentacion({ presentacion }) {
 
                 <p className="text-orange-500 font-bold italic text-lg mt-1">
                     ${presentacion.precio}
+                </p>
+                <p className="text-orange-500 font-bold italic text-lg mt-1">
+                    Cantidad: {presentacion.cantidad}
                 </p>
 
                 {estaEnCarrito ? (
