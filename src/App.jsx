@@ -14,6 +14,8 @@ import MiCuenta from "./pages/MiCuenta";
 import AdminPedidos from "./pages/Admin-pedidos";
 import AdminCrearPedidos from "./pages/Admin-crearPedido";
 import AdminProductos from "./pages/Admin-productos";
+import Carrito from "./pages/Carrito.jsx";
+import AdminPresentaciones from "./pages/Admin-presentaciones.jsx";
 
 function App() {
   return (
@@ -26,6 +28,7 @@ function App() {
             <Route path="/pedido" element={<Pedido />} />
             <Route path="/contacto" element={<Contacto />} />
             <Route path="/micuenta" element={<MiCuenta />} />
+              <Route path="/carrito" element={<Carrito />} />
           </Route>
 
           <Route
@@ -40,6 +43,7 @@ function App() {
             <Route path="pedidos" element={<AdminPedidos />} />
             <Route path="crearPedido" element={<AdminCrearPedidos />} />
             <Route path="productos" element={<AdminProductos />} />
+              <Route path="presentacion" element={<AdminPresentaciones />} />
           </Route>
         </Routes>
       </BrowserRouter>

@@ -37,6 +37,13 @@ function AdminLayout() {
                     >
                       Productos
                     </Link>
+            <Link to={"/admin/presentacion"}
+                  className="block p-3 rounded-lg hover:bg-gray-800"
+                  >
+                Presentacion
+            </Link>
+
+
           <Link
             to="/catalogo"
             className="block p-3 rounded-lg hover:bg-gray-800 text-gray-300"
