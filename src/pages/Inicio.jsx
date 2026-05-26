@@ -8,11 +8,13 @@ import {useEffect} from "react";
 
 export default function Inicio() {
 
-     const [presentacion, setPresentacion] = useState([]);
-     const [loading, setLoading] = useState(true);
+    const [presentacion, setPresentacion] = useState([]);
+    const [imagenes, setImagenes] = useState([]);
+    const [loading, setLoading] = useState(true);
 
      useEffect(() => {
         obtenerPresentaciones()
+         obtenerImagenes();
 
 
      }, []);
@@ -37,6 +39,26 @@ export default function Inicio() {
                 setLoading(false);
             }
         };
+    const obtenerImagenes = async () => {
+        try {
+            const response = await apiFetch("/api/v1/imagenProducto/listarImagenes");
+            const data = await response.json();
+
+            setImagenes(data);
+        } catch (error) {
+            console.error("Error al obtener imágenes:", error);
+        }
+    };
+
+    const obtenerImagenPresentacion = (idPresentacion) => {
+        return imagenes.find(
+            (imagen) => Number(imagen.idPresentacion) === Number(idPresentacion)
+        );
+    };
+
+    if (loading) {
+        return <div className="p-10 text-xl">Cargando catálogo...</div>;
+    }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -74,14 +96,19 @@ export default function Inicio() {
         <div className="mt-16 max-w-4xl mx-auto text-center">
           <h3 className="text-2xl font-bold mb-6">Productos destacados</h3>
           <div className="flex flex-wrap gap-10 justify-center mt-10">
-                        {presentacion.map((presentacion) => (
+              {presentacion.map((presentacion) => {
+                  const imagenPresentacion = obtenerImagenPresentacion(
+                      presentacion.id
+                  );
 
-                            <FichaPresentacion
-                                key={presentacion.id}
-                                presentacion={presentacion}
-                            />
-
-                        ))}
+                  return (
+                      <FichaPresentacion
+                          key={presentacion.id}
+                          presentacion={presentacion}
+                          imagenProducto={imagenPresentacion}
+                      />
+                  );
+              })}
                     </div>
         </div>
       </main>
