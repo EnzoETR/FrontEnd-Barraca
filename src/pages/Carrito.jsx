@@ -1,16 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import FichaCarrito from "../components/FichaCarrito";
 import { apiFetch } from "../services/apiClient";
-
+import { obtenerSesion } from "../services/authStorage";
 export default function Carrito() {
+
+const usuario = obtenerSesion();
+
+console.log(usuario.idUsuario);
 
     const [carrito, setCarrito] = useState(
         JSON.parse(localStorage.getItem("carrito")) || []
     );
 
-    const usuario = JSON.parse(
-        localStorage.getItem("usuario")
-    );
+const [direcciones, setDirecciones] = useState([]);
+
 
     const [datosCliente, setDatosCliente] = useState({
         nombre: "",
@@ -140,7 +143,7 @@ export default function Carrito() {
 
                 body = {
                     ...body,
-                    idUsuario: usuario.id,
+                    idUsuario: usuario.idUsuario,
                     idDireccion: pedido.idDireccion
                 };
 
@@ -255,6 +258,35 @@ export default function Carrito() {
             .toISOString()
             .slice(0, 10);
 
+    useEffect(() => {
+
+        const cargarDirecciones = async () => {
+
+            if (!usuario) return;
+
+            try {
+
+                const response = await apiFetch(
+                    `/api/v1/direcciones/usuario/${usuario.idUsuario}`
+                );
+
+                const data = await response.json();
+
+                console.log(data);
+
+                setDirecciones(data);
+
+            } catch (error) {
+
+                console.error(error);
+            }
+        };
+
+        cargarDirecciones();
+
+    }, []);
+
+console.log(direcciones);
     return (
         <div className="min-h-screen flex flex-col">
 
@@ -452,12 +484,8 @@ export default function Carrito() {
 
                                     <select
                                         name="idDireccion"
-                                        value={
-                                            pedido.idDireccion
-                                        }
-                                        onChange={
-                                            handlePedido
-                                        }
+                                        value={pedido.idDireccion}
+                                        onChange={handlePedido}
                                         className="
                                             w-full
                                             border
@@ -470,13 +498,16 @@ export default function Carrito() {
                                             Seleccionar dirección
                                         </option>
 
-                                        <option value="1">
-                                            Av. Italia 1234
-                                        </option>
+                                        {direcciones.map((direccion) => (
 
-                                        <option value="2">
-                                            Centro 456
-                                        </option>
+                                            <option
+                                                key={direccion.id}
+                                                value={direccion.id}
+                                            >
+                                                {direccion.calle} {direccion.numeroCasa}
+                                            </option>
+
+                                        ))}
 
                                     </select>
 
