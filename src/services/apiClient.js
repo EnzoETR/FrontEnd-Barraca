@@ -2,7 +2,7 @@ import { API_BASE_URL } from "../config/api";
 import { borrarSesion, obtenerSesion } from "./authStorage";
 
 export async function apiFetch(ruta, opciones = {}) {
-  const { publico = false, ...restoOpciones } = opciones;
+  const { publico = false, credenciales = false, ...restoOpciones } = opciones;
   const sesion = obtenerSesion();
   const headers = {
     "Content-Type": "application/json",
@@ -16,6 +16,7 @@ export async function apiFetch(ruta, opciones = {}) {
   const response = await fetch(`${API_BASE_URL}${ruta}`, {
     ...restoOpciones,
     headers,
+    credentials: credenciales ? "include" : restoOpciones.credentials,
   });
 
   if (!publico && (response.status === 401 || response.status === 403)) {

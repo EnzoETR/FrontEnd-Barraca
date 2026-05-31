@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import FichaCarrito from "../components/FichaCarrito";
 import { apiFetch } from "../services/apiClient";
-import { obtenerSesion } from "../services/authStorage";
+import { useAuth } from "../context/AuthContext";
+
 export default function Carrito() {
 
-const usuario = obtenerSesion();
-
-console.log(usuario.idUsuario);
+    const { usuario } = useAuth();
 
     const [carrito, setCarrito] = useState(
         JSON.parse(localStorage.getItem("carrito")) || []
@@ -164,63 +163,34 @@ const [direcciones, setDirecciones] = useState([]);
                 };
             }
 
-            console.log("========== BODY ==========");
-
-            console.log(
-                JSON.stringify(body, null, 2)
-            );
-
-            console.log("========== CARRITO ==========");
-
-            console.log(carrito);
-
-            console.log("========== DETALLES ==========");
-
-            console.log(detalles);
-
-            detalles.forEach((detalle, index) => {
-
-                console.log(
-                    `DETALLE ${index}`
-                );
-
-                console.log(
-                    "ID PRESENTACION -> ",
-                    detalle.idPresentacion
-                );
-
-                console.log(
-                    "CANTIDAD -> ",
-                    detalle.cantidad
-                );
-            });
-
-            console.log("========== USUARIO ==========");
-
-            console.log(usuario);
-
-            console.log("========== PEDIDO ==========");
-
-            console.log(pedido);
-
-            console.log("========== DATOS CLIENTE ==========");
-
-            console.log(datosCliente);
-
-
             if (!pedido.horarioEntrega) {
-
                 alert("Seleccione un horario");
-
                 return;
             }
 
+            if (!usuario) {
+                const { nombre, telefono, calle, numeroCasa } = datosCliente;
+                if (!nombre || !telefono || !calle || !numeroCasa) {
+                    alert("Complete nombre, teléfono, calle y número de casa");
+                    return;
+                }
+            } else if (!pedido.idDireccion) {
+                alert("Seleccione una dirección");
+                return;
+            }
+
+            const opcionesFetch = usuario
+                ? { method: "POST", body: JSON.stringify(body) }
+                : {
+                    method: "POST",
+                    body: JSON.stringify(body),
+                    publico: true,
+                    credenciales: true,
+                };
+
             const response = await apiFetch(
                 "/api/v1/pedidos/crearPedido",
-                {
-                    method: "POST",
-                    body: JSON.stringify(body)
-                }
+                opcionesFetch
             );
 
             if (!response.ok) {
@@ -230,9 +200,7 @@ const [direcciones, setDirecciones] = useState([]);
                 );
             }
 
-            const data = await response.json();
-
-            console.log(data);
+            await response.json();
 
             alert("Pedido creado correctamente");
 
@@ -272,8 +240,6 @@ const [direcciones, setDirecciones] = useState([]);
 
                 const data = await response.json();
 
-                console.log(data);
-
                 setDirecciones(data);
 
             } catch (error) {
@@ -284,9 +250,8 @@ const [direcciones, setDirecciones] = useState([]);
 
         cargarDirecciones();
 
-    }, []);
+    }, [usuario]);
 
-console.log(direcciones);
     return (
         <div className="min-h-screen flex flex-col">
 
@@ -404,7 +369,8 @@ console.log(direcciones);
                                     <input
                                         type="text"
                                         name="nombre"
-                                        placeholder="Nombre"
+                                        placeholder="Nombre *"
+                                        required
                                         value={
                                             datosCliente.nombre
                                         }
@@ -417,7 +383,8 @@ console.log(direcciones);
                                     <input
                                         type="text"
                                         name="telefono"
-                                        placeholder="Teléfono"
+                                        placeholder="Teléfono *"
+                                        required
                                         value={
                                             datosCliente.telefono
                                         }
@@ -430,7 +397,8 @@ console.log(direcciones);
                                     <input
                                         type="text"
                                         name="calle"
-                                        placeholder="Calle"
+                                        placeholder="Calle *"
+                                        required
                                         value={
                                             datosCliente.calle
                                         }
@@ -443,7 +411,8 @@ console.log(direcciones);
                                     <input
                                         type="text"
                                         name="numeroCasa"
-                                        placeholder="Número de casa"
+                                        placeholder="Número de casa *"
+                                        required
                                         value={
                                             datosCliente.numeroCasa
                                         }

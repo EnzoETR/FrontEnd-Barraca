@@ -1,5 +1,6 @@
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { API_BASE_URL } from "../config/api";
+import { initClienteAnonimo } from "../services/clienteAnonimoService";
 import {
   borrarSesion,
   esAdmin,
@@ -12,6 +13,12 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [usuario, setUsuario] = useState(() => obtenerSesion());
+
+  useEffect(() => {
+    initClienteAnonimo().catch((error) => {
+      console.error("Error al iniciar cliente anónimo:", error);
+    });
+  }, []);
 
   const login = useCallback(async (telefono, password) => {
     let response;
