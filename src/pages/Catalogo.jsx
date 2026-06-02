@@ -1,11 +1,16 @@
 import FichaPresentacion from "../components/fichaPresentacion.jsx";
 import { useState, useEffect } from "react";
 import { apiFetch } from "../services/apiClient.js";
+import { Paginator } from "primereact/paginator";
+import { AutoComplete } from "primereact/autocomplete";
 
 export default function Catalogo() {
     const [presentacion, setPresentacion] = useState([]);
     const [imagenes, setImagenes] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [first, setFirst] = useState(0);
+    const [rows, setRows] = useState(8);
+    const [selectedItem, setSelectedItem] = useState("");
 
     useEffect(() => {
         obtenerPresentaciones();
@@ -44,38 +49,66 @@ export default function Catalogo() {
         );
     };
 
+    const presentacionesPaginadas = presentacion.slice(first, first + rows);
+
+
     if (loading) {
         return <div className="p-10 text-xl">Cargando catálogo...</div>;
     }
+
+    const descripciones = presentacion.map(
+        (p) => p.descripcion
+    );
 
     return (
         <div className="min-h-screen flex flex-col">
             <main className="flex-grow p-6">
 
-                <select>
-                    <option>Nombre</option>
-                    <option>Precio</option>
-                </select>
+                <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-6">
 
-                <input
-                    type="text"
-                    placeholder="Leña de Barra"
-                />
+                    <select className="border rounded-lg px-4 py-2">
+                        <option>Nombre</option>
+                        <option>Precio</option>
+                    </select>
 
-                <div className="flex flex-wrap gap-10 justify-center mt-10">
-                    {presentacion.map((presentacion) => {
-                        const imagenPresentacion = obtenerImagenPresentacion(
-                            presentacion.id
-                        );
+                   <form>
+                       <input className="border rounded-lg px-4 py-2 " type="text" placeholder="Leña de roble"/>
+                   </form>
 
-                        return (
-                            <FichaPresentacion
-                                key={presentacion.id}
-                                presentacion={presentacion}
-                                imagenProducto={imagenPresentacion}
-                            />
-                        );
-                    })}
+                </div>
+
+                <div className="mt-10 max-w-7xl mx-auto px-6">
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 justify-items-center">
+
+                        {presentacionesPaginadas.map((p) => {
+                            const imagenPresentacion =
+                                obtenerImagenPresentacion(p.id);
+
+                            return (
+                                <FichaPresentacion
+                                    key={p.id}
+                                    presentacion={p}
+                                    imagenProducto={imagenPresentacion}
+                                />
+                            );
+                        })}
+
+                    </div>
+
+                    <div className="mt-8 flex justify-center">
+                        <Paginator
+                            first={first}
+                            rows={rows}
+                            totalRecords={presentacion.length}
+                            rowsPerPageOptions={[4, 8, 12, 16]}
+                            onPageChange={(e) => {
+                                setFirst(e.first);
+                                setRows(e.rows);
+                            }}
+                        />
+                    </div>
+
                 </div>
 
             </main>
