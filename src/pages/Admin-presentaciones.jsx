@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "../services/apiClient";
 
+const SUGERENCIAS_DESCRIPCION = ["Tarrina", "Bolsa", "Camion", "Camioneta"];
+
 function AdminPresentaciones() {
     const [presentaciones, setPresentaciones] = useState([]);
     const [productos, setProductos] = useState([]);
@@ -264,19 +266,29 @@ function AdminPresentaciones() {
             <div className="bg-white shadow-lg p-6 mb-8 border">
                 <h2 className="text-2xl font-bold mb-4">Agregar presentación</h2>
 
+                <datalist id="sugerencias-descripcion-presentacion">
+                    {SUGERENCIAS_DESCRIPCION.map((opcion) => (
+                        <option key={opcion} value={opcion} />
+                    ))}
+                </datalist>
+
                 <div className="grid md:grid-cols-6 gap-4">
-                    <input
-                        type="text"
-                        placeholder="Descripción"
-                        value={nuevaPresentacion.descripcion}
-                        onChange={(e) =>
-                            setNuevaPresentacion({
-                                ...nuevaPresentacion,
-                                descripcion: e.target.value
-                            })
-                        }
-                        className="border p-3 rounded-lg"
-                    />
+                    <div className="flex flex-col gap-1">
+                        <input
+                            type="text"
+                            list="sugerencias-descripcion-presentacion"
+                            placeholder="Descripción"
+                            value={nuevaPresentacion.descripcion}
+                            onChange={(e) =>
+                                setNuevaPresentacion({
+                                    ...nuevaPresentacion,
+                                    descripcion: e.target.value
+                                })
+                            }
+                            className="border p-3 rounded-lg"
+                        />
+
+                    </div>
 
                     <input
                         type="number"
