@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
 
-export default function FichaPresentacion({ presentacion, imagenProducto }) {
+export default function FichaPresentacion({ presentacion, imagenProducto, nombreProducto }) {
 
 
     const [carrito, setCarrito] = useState(
@@ -90,7 +90,12 @@ export default function FichaPresentacion({ presentacion, imagenProducto }) {
     return (
         <Card
             title={presentacion.descripcion}
-            subTitle={`Cantidad: ${presentacion.cantidad}`}
+            subTitle={
+                <div>
+                    <p>{nombreProducto}</p>
+                    <p>Cantidad: {presentacion.cantidad}</p>
+                </div>
+            }
             header={header}
             footer={footer}
             className="w-[220px] "

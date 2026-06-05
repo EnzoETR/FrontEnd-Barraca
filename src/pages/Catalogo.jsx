@@ -6,6 +6,7 @@ import { AutoComplete } from "primereact/autocomplete";
 
 export default function Catalogo() {
     const [presentacion, setPresentacion] = useState([]);
+    const [producto, setProducto] = useState([]);
     const [imagenes, setImagenes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [first, setFirst] = useState(0);
@@ -15,6 +16,7 @@ export default function Catalogo() {
     useEffect(() => {
         obtenerPresentaciones();
         obtenerImagenes();
+        obtenenerProductos()
     }, []);
 
     const obtenerPresentaciones = async () => {
@@ -49,8 +51,34 @@ export default function Catalogo() {
         );
     };
 
-    const presentacionesPaginadas = presentacion.slice(first, first + rows);
+    const obtenenerProductos = async () => {
+        try {
+            const response = await  apiFetch(
+                "/api/v1/producto/listarProducto"
+            );
 
+            const data = await response.json();
+
+            console.log(data);
+
+            setProducto(data);
+        }catch(err) {
+            console.error("Error al obtener los productos",err);
+        }finally {
+            setLoading(false);
+        }
+    };
+
+
+    const obtenerNombreProductoPresentacion = (presentacion) => {
+        const prod = producto.find(
+            p => Number(p.id) === Number(presentacion.idProducto)
+        );
+
+        return prod ? prod.nombre : "Producto no encontrado";
+    };
+
+    const presentacionesPaginadas = presentacion.slice(first, first + rows);
 
     if (loading) {
         return <div className="p-10 text-xl">Cargando catálogo...</div>;
@@ -84,12 +112,14 @@ export default function Catalogo() {
                         {presentacionesPaginadas.map((p) => {
                             const imagenPresentacion =
                                 obtenerImagenPresentacion(p.id);
+                            const nombreProducto = obtenerNombreProductoPresentacion(p);
 
                             return (
                                 <FichaPresentacion
                                     key={p.id}
                                     presentacion={p}
                                     imagenProducto={imagenPresentacion}
+                                    nombreProducto={nombreProducto}
                                 />
                             );
                         })}

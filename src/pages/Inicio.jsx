@@ -6,6 +6,7 @@ import { Paginator } from "primereact/paginator";
 
 export default function Inicio() {
     const [presentacion, setPresentacion] = useState([]);
+    const [producto, setProducto] = useState([]);
     const [imagenes, setImagenes] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -15,7 +16,26 @@ export default function Inicio() {
     useEffect(() => {
         obtenerPresentaciones();
         obtenerImagenes();
+        obtenenerProductos()
     }, []);
+
+    const obtenenerProductos = async () => {
+        try {
+            const response = await  apiFetch(
+                "/api/v1/producto/listarProducto"
+            );
+
+            const data = await response.json();
+
+            console.log(data);
+
+            setProducto(data);
+        }catch(err) {
+            console.error("Error al obtener los productos",err);
+        }finally {
+            setLoading(false);
+        }
+    };
 
     const obtenerPresentaciones = async () => {
         try {
@@ -55,6 +75,15 @@ export default function Inicio() {
                 Number(imagen.idPresentacion) === Number(idPresentacion)
         );
     };
+
+    const obtenerNombreProductoPresentacion = (presentacion) => {
+        const prod = producto.find(
+            p => Number(p.id) === Number(presentacion.idProducto)
+        );
+
+        return prod ? prod.nombre : "Producto no encontrado";
+    };
+
 
     const presentacionesPaginadas = presentacion.slice(first, first + rows);
 
@@ -101,12 +130,14 @@ export default function Inicio() {
                         {presentacionesPaginadas.map((p) => {
                             const imagenPresentacion =
                                 obtenerImagenPresentacion(p.id);
+                            const nombreProducto = obtenerNombreProductoPresentacion(p);
 
                             return (
                                 <FichaPresentacion
                                     key={p.id}
                                     presentacion={p}
                                     imagenProducto={imagenPresentacion}
+                                    nombreProducto={nombreProducto}
                                 />
                             );
                         })}
@@ -117,7 +148,7 @@ export default function Inicio() {
                             first={first}
                             rows={rows}
                             totalRecords={presentacion.length}
-                            rowsPerPageOptions={[3, 6, 9]}
+                            rowsPerPageOptions={[3]}
                             onPageChange={(e) => {
                                 setFirst(e.first);
                                 setRows(e.rows);
