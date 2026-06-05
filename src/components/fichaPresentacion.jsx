@@ -1,36 +1,28 @@
-import imagenLenia from "../images/imagenLenia.jpeg";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { Card } from "primereact/card";
+import { Button } from "primereact/button";
 
+export default function FichaPresentacion({ presentacion, imagenProducto, nombreProducto }) {
 
-export default function FichaPresentacion({ presentacion, imagenProducto }) {
-    const navigate = useNavigate();
 
     const [carrito, setCarrito] = useState(
         JSON.parse(localStorage.getItem("carrito")) || []
     );
 
     const agregarAlCarrito = (presentacion) => {
-
         let carritoActual =
             JSON.parse(localStorage.getItem("carrito")) || [];
 
         const productoExistente = carritoActual.find(
-            (item) =>
-                item.idPresentacion ===
-                presentacion.id
+            (item) => item.idPresentacion === presentacion.id
         );
 
         if (productoExistente) {
-
             productoExistente.cantidad += 1;
-
             productoExistente.subtotal =
-                productoExistente.cantidad *
-                productoExistente.precio;
-
+                productoExistente.cantidad * productoExistente.precio;
         } else {
-
             carritoActual.push({
                 idPresentacion: presentacion.id,
                 descripcion: presentacion.descripcion,
@@ -40,23 +32,17 @@ export default function FichaPresentacion({ presentacion, imagenProducto }) {
             });
         }
 
-console.log(
-    "PRODUCTO AGREGADO -> ",
-    carritoActual
-);
-        localStorage.setItem(
-            "carrito",
-            JSON.stringify(carritoActual)
-        );
-
+        localStorage.setItem("carrito", JSON.stringify(carritoActual));
         setCarrito(carritoActual);
-
     };
 
     const eliminarDelCarrito = (id) => {
-        const carritoActual = JSON.parse(localStorage.getItem("carrito")) || [];
+        const carritoActual =
+            JSON.parse(localStorage.getItem("carrito")) || [];
 
-        const nuevoCarrito = carritoActual.filter((item) => item.idPresentacion !== id);
+        const nuevoCarrito = carritoActual.filter(
+            (item) => item.idPresentacion !== id
+        );
 
         localStorage.setItem("carrito", JSON.stringify(nuevoCarrito));
         setCarrito(nuevoCarrito);
@@ -66,52 +52,55 @@ console.log(
         (item) => item.idPresentacion === presentacion.id
     );
 
-    return (
-        <div className="bg-[#e9e9e9] w-[250px] p-3 flex flex-col items-center shadow-md">
-            <div className="w-full h-[12px] bg-orange-500 mb-[-12px] z-10"></div>
+    const header = imagenProducto ? (
+        <img
+            src={imagenProducto.imagen}
+            className="w-full h-36 object-cover"
+        />
+    ) : (
+        <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+            Sin imagen
+        </div>
+    );
 
-            {imagenProducto ? (
-                <img
-                    src={imagenProducto.imagen}
-                    alt={imagenProducto.nombre}
-                    className="w-full h-48 object-cover rounded-lg"
+    const footer = (
+        <div className="flex justify-between items-center">
+            <p className="text-orange-500 font-bold text-lg m-0">
+                ${presentacion.precio}
+            </p>
+
+            {estaEnCarrito ? (
+                <Button
+                    icon="pi pi-times"
+                    rounded
+                    severity="danger"
+                    className="!bg-red-500 !border-red-500 hover:!bg-red-600"
+                    onClick={() => eliminarDelCarrito(presentacion.id)}
                 />
             ) : (
-                <div className="w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center">
-                    Sin imagen
-                </div>
+                <Button
+                    icon="pi pi-shopping-cart"
+                    rounded
+                    onClick={() => agregarAlCarrito(presentacion)}
+                />
             )}
-
-            <div className="w-full flex flex-col mt-3">
-                <h3 className="text-orange-600 font-bold italic text-lg">
-                    {presentacion.descripcion}
-                </h3>
-
-                <p className="text-orange-500 font-bold italic text-lg mt-1">
-                    ${presentacion.precio}
-                </p>
-                <p className="text-orange-500 font-bold italic text-lg mt-1">
-                    Cantidad: {presentacion.cantidad}
-                </p>
-
-                {estaEnCarrito ? (
-                    <button
-                        className="mt-3 self-end bg-orange-500 hover:bg-orange-600 transition-colors px-4 py-2"
-                        type="button"
-                        onClick={() => eliminarDelCarrito(presentacion.id)}
-                    >
-                        ❌
-                    </button>
-                ) : (
-                    <button
-                        className="mt-3 self-end bg-orange-500 hover:bg-orange-600 transition-colors px-4 py-2"
-                        type="button"
-                        onClick={() => agregarAlCarrito(presentacion)}
-                    >
-                        🛒
-                    </button>
-                )}
-            </div>
         </div>
+    );
+
+    return (
+        <Card
+            title={presentacion.descripcion}
+            subTitle={
+                <div>
+                    <p>{nombreProducto}</p>
+                    <p>Cantidad: {presentacion.cantidad}</p>
+                </div>
+            }
+            header={header}
+            footer={footer}
+            className="w-[220px] "
+        >
+
+        </Card>
     );
 }
