@@ -24,9 +24,6 @@ export default function BarraNav() {
             <Link to="/catalogo">Catalogo</Link>
           </li>
           <li>
-            <Link to="/pedido">Hacer Pedido</Link>
-          </li>
-          <li>
             <Link to="/contacto">Contacto</Link>
           </li>
             <li>

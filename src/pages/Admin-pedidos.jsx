@@ -369,21 +369,22 @@ function AdminPedidos() {
 
                                                         <p className="text-gray-500">
 
-                                                            Presentación:
+                                                            {" "}
+                                                            x{detalle.cantidad}
                                                             {" "}
                                                             {detalle.nombrePresentacion}
                                                             {" "}-{" "}
-                                                            {detalle.cantidadPresentacion}kg
+                                                            {detalle.cantidadPresentacion}
+
                                                         </p>
+                                                        <p className="text-gray-500">
+                                                            {detalle.tipoUso}
+                                                            </p>
+
 
                                                     </div>
 
                                                     <div className="text-right">
-
-                                                        <p className="font-semibold">
-                                                            x{detalle.cantidad}
-                                                        </p>
-
                                                         <p
                                                             className="
                                                                 text-green-600

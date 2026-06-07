@@ -7,9 +7,20 @@ export default function Carrito() {
 
     const { usuario } = useAuth();
 
-    const [carrito, setCarrito] = useState(
-        JSON.parse(localStorage.getItem("carrito")) || []
-    );
+   const [carrito, setCarrito] = useState(() => {
+       const carritoGuardado =
+           JSON.parse(localStorage.getItem("carrito")) || [];
+
+       return carritoGuardado.map((item) => ({
+           ...item,
+           detallesUso: item.detallesUso || [
+               {
+                   tipoUso: "",
+                   cantidad: item.cantidad || 1
+               }
+           ]
+       }));
+   });
 
 const [direcciones, setDirecciones] = useState([]);
 
@@ -38,6 +49,90 @@ const [direcciones, setDirecciones] = useState([]);
             JSON.stringify(nuevoCarrito)
         );
     };
+
+const prepararCarrito = carrito.map((item) => ({
+    ...item,
+    detallesUso: item.detallesUso || [
+        {
+            tipoUso: "",
+            cantidad: item.cantidad || 1
+        }
+    ]
+}));
+
+const recalcularSubtotal = (detallesUso, precio) => {
+    const cantidadTotal = detallesUso.reduce(
+        (total, detalle) => total + Number(detalle.cantidad),
+        0
+    );
+
+    return cantidadTotal * precio;
+};
+
+const agregarDetalleUso = (id) => {
+    const nuevoCarrito = carrito.map((item) => {
+
+        if (item.idPresentacion === id) {
+
+            const nuevosDetallesUso = [
+                ...item.detallesUso,
+                {
+                    tipoUso: "",
+                    cantidad: 1
+                }
+            ];
+
+            return {
+                ...item,
+                detallesUso: nuevosDetallesUso,
+                cantidad: nuevosDetallesUso.reduce(
+                    (total, detalle) => total + Number(detalle.cantidad),
+                    0
+                ),
+                subtotal: recalcularSubtotal(
+                    nuevosDetallesUso,
+                    item.precio
+                )
+            };
+        }
+
+        return item;
+    });
+
+    actualizarCarrito(nuevoCarrito);
+};
+
+const cambiarDetalleUso = (id, index, campo, valor) => {
+    const nuevoCarrito = carrito.map((item) => {
+
+        if (item.idPresentacion === id) {
+
+            const nuevosDetallesUso = [...item.detallesUso];
+
+            nuevosDetallesUso[index] = {
+                ...nuevosDetallesUso[index],
+                [campo]: valor
+            };
+
+            return {
+                ...item,
+                detallesUso: nuevosDetallesUso,
+                cantidad: nuevosDetallesUso.reduce(
+                    (total, detalle) => total + Number(detalle.cantidad),
+                    0
+                ),
+                subtotal: recalcularSubtotal(
+                    nuevosDetallesUso,
+                    item.precio
+                )
+            };
+        }
+
+        return item;
+    });
+
+    actualizarCarrito(nuevoCarrito);
+};
 
     const aumentarCantidad = (id) => {
 
@@ -126,10 +221,13 @@ const [direcciones, setDirecciones] = useState([]);
 
         try {
 
-            const detalles = carrito.map((item) => ({
-                idPresentacion: item.idPresentacion,
-                cantidad: item.cantidad
-            }));
+            const detalles = carrito.flatMap((item) =>
+                item.detallesUso.map((detalle) => ({
+                    idPresentacion: item.idPresentacion,
+                    cantidad: Number(detalle.cantidad),
+                    tipoUso: detalle.tipoUso
+                }))
+            );
 
             let body = {
                 fechaEntrega: pedido.fechaEntrega,
@@ -188,6 +286,7 @@ const [direcciones, setDirecciones] = useState([]);
                     credenciales: true,
                 };
 
+console.log("BODY QUE SE ENVIA:", body);
             const response = await apiFetch(
                 "/api/v1/pedidos/crearPedido",
                 opcionesFetch
@@ -270,22 +369,16 @@ const [direcciones, setDirecciones] = useState([]);
                 ) : (
 
                     <>
-                        <div className="flex flex-wrap gap-10 justify-center mt-10">
+                        <div className="flex flex-wrap gap-8 justify-center mt-10">
 
                             {carrito.map((item) => (
 
                                 <FichaCarrito
                                     key={item.idPresentacion}
                                     item={item}
-                                    aumentarCantidad={
-                                        aumentarCantidad
-                                    }
-                                    disminuirCantidad={
-                                        disminuirCantidad
-                                    }
-                                    eliminarProducto={
-                                        eliminarProducto
-                                    }
+                                    agregarDetalleUso={agregarDetalleUso}
+                                    cambiarDetalleUso={cambiarDetalleUso}
+                                    eliminarProducto={eliminarProducto}
                                 />
                             ))}
 
