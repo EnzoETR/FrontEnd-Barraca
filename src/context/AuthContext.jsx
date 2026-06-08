@@ -43,12 +43,14 @@ export function AuthProvider({ children }) {
 
     guardarSesion(data);
     setUsuario(data);
+    localStorage.removeItem("carrito");
     return data;
   }, []);
 
   const logout = useCallback(() => {
     borrarSesion();
     setUsuario(null);
+    localStorage.removeItem("carrito");
   }, []);
 
   const valor = useMemo(

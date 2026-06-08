@@ -10,7 +10,7 @@ export default function FichaPresentacion({ presentacion, imagenProducto, nombre
         JSON.parse(localStorage.getItem("carrito")) || []
     );
 
-    const agregarAlCarrito = (presentacion) => {
+    const agregarAlCarrito = (presentacion, imagenProducto) => {
         let carritoActual =
             JSON.parse(localStorage.getItem("carrito")) || [];
 
@@ -28,7 +28,8 @@ export default function FichaPresentacion({ presentacion, imagenProducto, nombre
                 descripcion: presentacion.descripcion,
                 precio: presentacion.precio,
                 cantidad: 1,
-                subtotal: presentacion.precio
+                subtotal: presentacion.precio,
+                imagenProducto: imagenProducto?.imagen,
             });
         }
 
@@ -81,7 +82,7 @@ export default function FichaPresentacion({ presentacion, imagenProducto, nombre
                 <Button
                     icon="pi pi-shopping-cart"
                     rounded
-                    onClick={() => agregarAlCarrito(presentacion)}
+                    onClick={() => agregarAlCarrito(presentacion, imagenProducto)}
                 />
             )}
         </div>

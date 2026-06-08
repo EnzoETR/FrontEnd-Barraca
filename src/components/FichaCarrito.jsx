@@ -1,4 +1,6 @@
 import imagenLenia from "../images/imagenLenia.jpeg";
+import { Card } from "primereact/card";
+import { Button } from "primereact/button";
 
 export default function FichaCarrito({
     item,
@@ -12,25 +14,48 @@ export default function FichaCarrito({
         "calefactor"
     ];
 
-    return (
-        <div className="w-[260px] min-h-[430px] border-4 border-black bg-white p-3">
 
-            <div className="border-4 border-black h-[130px] overflow-hidden">
-                <img
-                    src={imagenLenia}
-                    alt="Leña"
-                    className="w-full h-full object-cover"
+
+    const header = (
+        <img
+            src={item.imagenProducto || imagenLenia}
+            alt={item.descripcion}
+            className="w-full h-36 object-cover"
+        />
+    );
+
+    const footer = (
+        <div>
+            <div className="flex justify-between items-center mb-3">
+                <p className="text-sm m-0">
+                    Precio: ${item.precio}
+                </p>
+
+                <Button
+                    icon="pi pi-times"
+                    rounded
+                    severity="danger"
+                    className="!bg-red-500 !border-red-500 hover:!bg-red-600"
+                    onClick={() => eliminarProducto(item.idPresentacion)}
                 />
             </div>
 
-            <h3 className="mt-3 text-sm font-medium">
-                {item.descripcion}
-            </h3>
+            <p className="text-orange-500 font-bold text-lg m-0">
+                Subtotal: ${item.subtotal}
+            </p>
+        </div>
+    );
 
-            <div className="mt-4 space-y-3">
+    return (
+        <Card
+            title={item.descripcion}
+            header={header}
+            footer={footer}
+            className="w-[260px]"
+        >
+            <div className="mt-2 space-y-3">
 
                 {item.detallesUso.map((detalle, index) => (
-
                     <div
                         key={index}
                         className="flex items-center gap-3"
@@ -45,7 +70,7 @@ export default function FichaCarrito({
                                     e.target.value
                                 )
                             }
-                            className="w-[135px] border border-black px-2 py-1 text-sm"
+                            className="w-[135px] border border-gray-300 px-2 py-1 text-sm rounded"
                         >
                             <option value="">
                                 tipo de uso
@@ -73,39 +98,22 @@ export default function FichaCarrito({
                                     Number(e.target.value)
                                 )
                             }
-                            className="w-[65px] border border-black px-2 py-1 text-center"
+                            className="w-[65px] border border-gray-300 px-2 py-1 text-center rounded"
                         />
                     </div>
-
                 ))}
 
+                <div className="flex justify-end">
+                    <Button
+                        icon="pi pi-plus"
+                        rounded
+                        outlined
+                        severity="warning"
+                        onClick={() => agregarDetalleUso(item.idPresentacion)}
+                    />
+                </div>
+
             </div>
-
-            <div className="mt-3 flex justify-end">
-                <button
-                    type="button"
-                    onClick={() => agregarDetalleUso(item.idPresentacion)}
-                    className="border border-orange-300 text-orange-500 px-5 py-1 rounded-md"
-                >
-                    +
-                </button>
-            </div>
-
-            <button
-                type="button"
-                onClick={() => eliminarProducto(item.idPresentacion)}
-                className="mt-5 bg-red-500 px-3 py-1 text-white"
-            >
-                X
-            </button>
-
-            <p className="mt-3 text-sm">
-                Precio: ${item.precio}
-            </p>
-
-            <p className="font-bold text-sm">
-                Subtotal: ${item.subtotal}
-            </p>
-        </div>
+        </Card>
     );
 }
