@@ -6,6 +6,7 @@ export default function FichaCarrito({
     item,
     agregarDetalleUso,
     cambiarDetalleUso,
+    eliminarDetalleUso,
     eliminarProducto
 }) {
     const tiposUso = [
@@ -99,6 +100,20 @@ export default function FichaCarrito({
                                 )
                             }
                             className="w-[65px] border border-gray-300 px-2 py-1 text-center rounded"
+                        />
+                        <Button
+                            icon="pi pi-minus"
+                            rounded
+                            outlined
+                            severity="danger"
+                            size="small"
+                            disabled={item.detallesUso.length === 1}
+                            onClick={() =>
+                                eliminarDetalleUso(
+                                    item.idPresentacion,
+                                    index
+                                )
+                            }
                         />
                     </div>
                 ))}
