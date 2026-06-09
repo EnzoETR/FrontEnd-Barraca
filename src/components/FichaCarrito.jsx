@@ -1,4 +1,4 @@
-import imagenLenia from "../images/imagenLenia.jpeg";
+import imagenLenia from "../images/imagenLenia.jpg";
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
 
