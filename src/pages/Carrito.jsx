@@ -33,6 +33,72 @@ const [direcciones, setDirecciones] = useState([]);
         referencia: ""
     });
 
+const [mostrarNuevaDireccion, setMostrarNuevaDireccion] = useState(false);
+
+const [nuevaDireccion, setNuevaDireccion] = useState({
+    calle: "",
+    numeroCasa: "",
+    referencia: "",
+    alias: ""
+});
+
+const handleNuevaDireccion = (e) => {
+    setNuevaDireccion({
+        ...nuevaDireccion,
+        [e.target.name]: e.target.value
+    });
+};
+
+const agregarDireccion = async () => {
+    try {
+        if (!nuevaDireccion.calle || !nuevaDireccion.numeroCasa || !nuevaDireccion.alias) {
+            alert("Complete alias, calle y número de casa");
+            return;
+        }
+
+        const body = {
+            idUsuario: usuario.idUsuario,
+            calle: nuevaDireccion.calle,
+            numeroCasa: Number(nuevaDireccion.numeroCasa),
+            referencia: nuevaDireccion.referencia,
+            alias: nuevaDireccion.alias
+        };
+
+        const response = await apiFetch("/api/v1/direcciones/agregarDireccion", {
+            method: "POST",
+            body: JSON.stringify(body)
+        });
+
+        if (!response.ok) {
+            throw new Error("Error al agregar dirección");
+        }
+
+        const direccionCreada = await response.json();
+
+        setDirecciones([...direcciones, direccionCreada]);
+
+        setPedido({
+            ...pedido,
+            idDireccion: direccionCreada.id
+        });
+
+        setNuevaDireccion({
+            calle: "",
+            numeroCasa: "",
+            referencia: "",
+            alias: ""
+        });
+
+        setMostrarNuevaDireccion(false);
+
+        alert("Dirección agregada correctamente");
+
+    } catch (error) {
+        console.error(error);
+        alert("Error al agregar dirección");
+    }
+};
+
     const [pedido, setPedido] = useState({
         fechaEntrega: "",
         horarioEntrega: "",
@@ -123,6 +189,40 @@ const cambiarDetalleUso = (id, index, campo, valor) => {
                 ),
                 subtotal: recalcularSubtotal(
                     nuevosDetallesUso,
+                    item.precio
+                )
+            };
+        }
+
+        return item;
+    });
+
+    actualizarCarrito(nuevoCarrito);
+};
+
+const eliminarDetalleUso = (idPresentacion, index) => {
+
+    const nuevoCarrito = carrito.map((item) => {
+
+        if (item.idPresentacion === idPresentacion) {
+
+            if (item.detallesUso.length === 1) {
+                return item;
+            }
+
+            const nuevosDetalles = item.detallesUso.filter(
+                (_, i) => i !== index
+            );
+
+            return {
+                ...item,
+                detallesUso: nuevosDetalles,
+                cantidad: nuevosDetalles.reduce(
+                    (total, detalle) => total + Number(detalle.cantidad),
+                    0
+                ),
+                subtotal: recalcularSubtotal(
+                    nuevosDetalles,
                     item.precio
                 )
             };
@@ -378,6 +478,7 @@ console.log("BODY QUE SE ENVIA:", body);
                                     item={item}
                                     agregarDetalleUso={agregarDetalleUso}
                                     cambiarDetalleUso={cambiarDetalleUso}
+                                    eliminarDetalleUso={eliminarDetalleUso}
                                     eliminarProducto={eliminarProducto}
                                 />
                             ))}
@@ -539,7 +640,6 @@ console.log("BODY QUE SE ENVIA:", body);
 
                                 /* USUARIO LOGUEADO */
                                 <div>
-
                                     <label className="block font-semibold mb-2">
                                         Dirección
                                     </label>
@@ -548,31 +648,78 @@ console.log("BODY QUE SE ENVIA:", body);
                                         name="idDireccion"
                                         value={pedido.idDireccion}
                                         onChange={handlePedido}
-                                        className="
-                                            w-full
-                                            border
-                                            p-3
-                                            rounded
-                                        "
+                                        className="w-full border p-3 rounded"
                                     >
-
                                         <option value="">
                                             Seleccionar dirección
                                         </option>
 
                                         {direcciones.map((direccion) => (
-
                                             <option
                                                 key={direccion.id}
                                                 value={direccion.id}
                                             >
-                                                {direccion.calle} {direccion.numeroCasa}
+                                                {direccion.alias} - {direccion.calle} {direccion.numeroCasa}
                                             </option>
-
                                         ))}
-
                                     </select>
 
+                                    <button
+                                        type="button"
+                                        onClick={() => setMostrarNuevaDireccion(!mostrarNuevaDireccion)}
+                                        className="mt-3 text-green-700 font-semibold"
+                                    >
+                                        + Agregar nueva dirección
+                                    </button>
+
+                                    {mostrarNuevaDireccion && (
+                                        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded-xl border">
+
+                                            <input
+                                                type="text"
+                                                name="alias"
+                                                placeholder="Alias, ej: Casa"
+                                                value={nuevaDireccion.alias}
+                                                onChange={handleNuevaDireccion}
+                                                className="border p-3 rounded"
+                                            />
+
+                                            <input
+                                                type="text"
+                                                name="calle"
+                                                placeholder="Calle"
+                                                value={nuevaDireccion.calle}
+                                                onChange={handleNuevaDireccion}
+                                                className="border p-3 rounded"
+                                            />
+
+                                            <input
+                                                type="number"
+                                                name="numeroCasa"
+                                                placeholder="Número de casa"
+                                                value={nuevaDireccion.numeroCasa}
+                                                onChange={handleNuevaDireccion}
+                                                className="border p-3 rounded"
+                                            />
+
+                                            <input
+                                                type="text"
+                                                name="referencia"
+                                                placeholder="Referencia"
+                                                value={nuevaDireccion.referencia}
+                                                onChange={handleNuevaDireccion}
+                                                className="border p-3 rounded"
+                                            />
+
+                                            <button
+                                                type="button"
+                                                onClick={agregarDireccion}
+                                                className="md:col-span-2 bg-green-600 hover:bg-green-700 text-white p-3 rounded-xl font-bold"
+                                            >
+                                                Guardar dirección
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
 
                             )}
