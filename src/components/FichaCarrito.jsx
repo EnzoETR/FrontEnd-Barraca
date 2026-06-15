@@ -1,4 +1,3 @@
-import imagenLenia from "../images/imagenLenia.jpg";
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
 
@@ -19,7 +18,7 @@ export default function FichaCarrito({
 
     const header = (
         <img
-            src={item.imagenProducto || imagenLenia}
+            src={item.imagenProducto}
             alt={item.descripcion}
             className="w-full h-36 object-cover"
         />

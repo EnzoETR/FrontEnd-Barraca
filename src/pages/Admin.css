@@ -1,0 +1,169 @@
+.input-crear-producto {
+    width: 100%;
+    height: 48px;
+}
+
+.btn-crear-producto {
+    background: #22c55e !important;
+    border: none !important;
+    font-weight: 700 !important;
+}
+
+.tabla-productos .p-datatable-thead > tr > th {
+    background: #f8fafc;
+    color: #334155;
+    font-weight: 700;
+    padding: 1rem;
+}
+
+.tabla-productos .p-datatable-tbody > tr > td {
+    padding: 1rem;
+    color: #1e293b;
+}
+
+.acciones-producto {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-editar-tabla {
+    background: #2563eb !important;
+    border: none !important;
+    border-radius: none !important;
+    font-weight: 700 !important;
+    padding: 10px;
+}
+
+.btn-eliminar-tabla {
+    background: #ef4444 !important;
+    border: none !important;
+    border-radius: none !important;
+    font-weight: 700 !important;
+    padding: 10px;
+}
+
+.dialog-producto .p-dialog {
+    border-radius: 20px !important;
+    overflow: hidden;
+}
+
+.dialog-producto .p-dialog-header {
+    padding: 34px 34px 20px 34px !important;
+}
+
+.dialog-producto .p-dialog-title {
+    font-size: 2.1rem !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+}
+
+.dialog-producto .p-dialog-content {
+    padding: 0 34px 30px 34px !important;
+}
+
+.dialog-producto .p-dialog-footer {
+    padding: 26px 34px !important;
+    border-top: 1px solid #e5e7eb !important;
+}
+
+.form-editar-producto {
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+}
+
+.campo-editar {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.campo-editar label {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #1e293b;
+}
+
+.input-editar {
+    width: 100%;
+    height: 62px;
+    border-radius: 16px !important;
+    border: 2px solid #d1d5db !important;
+    font-size: 1.25rem !important;
+    padding: 0 22px !important;
+    color: #334155 !important;
+    box-shadow: none !important;
+}
+
+.input-editar:hover {
+    border-color: #94a3b8 !important;
+}
+
+.input-editar:focus {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15) !important;
+}
+
+.dropdown-editar {
+    width: 100%;
+    height: 62px;
+    border-radius: 16px !important;
+    border: 2px solid #d1d5db !important;
+    box-shadow: none !important;
+}
+
+.dropdown-editar .p-dropdown-label {
+    display: flex;
+    align-items: center;
+    font-size: 1.25rem;
+    padding-left: 22px !important;
+    color: #334155 !important;
+}
+
+.dropdown-editar .p-dropdown-trigger {
+    width: 60px;
+}
+
+.dropdown-editar:hover {
+    border-color: #94a3b8 !important;
+}
+
+.dropdown-editar.p-focus {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15) !important;
+}
+
+.footer-dialog-producto {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    gap: 22px;
+}
+
+.btn-cancelar-dialog {
+    background: white !important;
+    color: #475569 !important;
+    border: 2px solid #d1d5db !important;
+    padding: 16px 32px !important;
+    font-size: 1.15rem !important;
+    font-weight: 800 !important;
+}
+
+.btn-cancelar-dialog:hover {
+    background: #f8fafc !important;
+}
+
+.btn-guardar-dialog {
+    background: #2563eb !important;
+    color: white !important;
+    border: none !important;
+    padding: 16px 34px !important;
+    font-size: 1.15rem !important;
+    font-weight: 800 !important;
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.32);
+}
+
+.btn-guardar-dialog:hover {
+    background: #1d4ed8 !important;
+    transform: translateY(-1px);
+}
