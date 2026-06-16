@@ -29,6 +29,13 @@ export default function BarraNav() {
             <li>
             <Link to="/carrito">Carrito</Link>
           </li>
+            <li>
+                {usuario?.token && (
+                    <Link to="/mispedidos">
+                        Mis pedidos
+                    </Link>
+                )}
+            </li>
           {esAdmin() && (
             <li>
               <Link to="/admin/pedidos">Admin</Link>

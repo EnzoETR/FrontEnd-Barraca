@@ -14,11 +14,13 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [usuario, setUsuario] = useState(() => obtenerSesion());
 
-  useEffect(() => {
-    initClienteAnonimo().catch((error) => {
-      console.error("Error al iniciar cliente anónimo:", error);
-    });
-  }, []);
+    useEffect(() => {
+        if (usuario) return;
+
+        initClienteAnonimo().catch((error) => {
+            console.error("Error al iniciar cliente anónimo:", error);
+        });
+    }, [usuario]);
 
   const login = useCallback(async (telefono, password) => {
     let response;
