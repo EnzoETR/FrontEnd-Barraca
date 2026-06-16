@@ -1,35 +1,63 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "../services/apiClient";
 
+import { DataTable } from "primereact/datatable";
+import { Column } from "primereact/column";
+import { InputText } from "primereact/inputtext";
+import { InputNumber } from "primereact/inputnumber";
+import { Button } from "primereact/button";
+import { Dialog } from "primereact/dialog";
+import { Dropdown } from "primereact/dropdown";
+
+import "./Admin.css";
+
 const SUGERENCIAS_DESCRIPCION = ["Tarrina", "Bolsa", "Camion", "Camioneta"];
 
 function AdminPresentaciones() {
     const [presentaciones, setPresentaciones] = useState([]);
     const [productos, setProductos] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [idPresentacionImagen, setIdPresentacionImagen] = useState(null);
+    const [globalFilter, setGlobalFilter] = useState("");
+
+    const [dialogVisible, setDialogVisible] = useState(false);
+    const [presentacionEditando, setPresentacionEditando] = useState(null);
 
     const [nuevaPresentacion, setNuevaPresentacion] = useState({
         descripcion: "",
-        cantidad: "",
+        cantidad: null,
         unidadMedida: "",
-        precio: "",
+        precio: null,
         idProducto: ""
     });
 
-    const [imagenProducto, setImagenProducto] = useState({
-        nombre: "",
-        extension: "",
-        imagen: "",
-        esPrincipal: false,
-        idProducto: "",
-        idPresentacion: ""
-    });
-
     useEffect(() => {
-        obtenerPresentaciones();
-        obtenerProductos();
+        cargarDatos();
     }, []);
+
+    const cargarDatos = async () => {
+        setLoading(true);
+
+        try {
+            const timestamp = new Date().getTime();
+
+            const [resPresentaciones, resProductos] = await Promise.all([
+                apiFetch(`/api/v1/presentacion/listarPresentacion?t=${timestamp}`),
+                apiFetch(`/api/v1/producto/listarProducto?t=${timestamp}`)
+            ]);
+
+            const dataPresentaciones = await resPresentaciones.json();
+            const dataProductos = await resProductos.json();
+
+            console.log("Presentaciones recargadas:", dataPresentaciones);
+
+            setPresentaciones(dataPresentaciones);
+            setProductos(dataProductos);
+        } catch (error) {
+            console.error("Error al cargar datos:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const obtenerPresentaciones = async () => {
         try {
@@ -53,13 +81,21 @@ function AdminPresentaciones() {
         }
     };
 
+    const obtenerIdProducto = (presentacion) => {
+        return (
+            presentacion.idProducto ??
+            presentacion.productoId ??
+            presentacion.id_producto ??
+            presentacion.producto?.id ??
+            ""
+        );
+    };
+
     const crearPresentacion = async () => {
         try {
             const response = await apiFetch("/api/v1/presentacion/crearPresentacion", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(nuevaPresentacion)
             });
 
@@ -71,48 +107,50 @@ function AdminPresentaciones() {
 
             setNuevaPresentacion({
                 descripcion: "",
-                cantidad: "",
+                cantidad: null,
                 unidadMedida: "",
-                precio: "",
+                precio: null,
                 idProducto: ""
             });
 
-            const data = await response.json();
-
-            alert("Presentación creada correctamente");
-
-            obtenerPresentaciones();
-
-            return data;
-
+           await cargarDatos();
         } catch (error) {
             console.error(error);
             alert("Error al crear presentación");
-            return false;
         }
     };
 
-    const actualizarPresentacion = async (presentacion) => {
+    const actualizarPresentacion = async () => {
         try {
+            console.log("Enviando al backend:", presentacionEditando);
+
             const response = await apiFetch(
-                `/api/v1/presentacion/actualizarPresentacion/${presentacion.id}`,
+                `/api/v1/presentacion/actualizarPresentacion/${presentacionEditando.id}`,
                 {
                     method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify(presentacion)
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(presentacionEditando)
                 }
             );
+
+            const data = await response.json();
+
+            console.log("Respuesta del backend:", data);
 
             if (!response.ok) {
                 throw new Error("Error al actualizar presentación");
             }
 
-            await subirImagen(presentacion);
+            setPresentaciones((prev) =>
+                prev.map((presentacion) =>
+                    presentacion.id === data.id ? data : presentacion
+                )
+            );
 
             alert("Presentación actualizada");
-            obtenerPresentaciones();
+            setDialogVisible(false);
+            setPresentacionEditando(null);
+
         } catch (error) {
             console.error(error);
             alert(error.message);
@@ -126,9 +164,7 @@ function AdminPresentaciones() {
         try {
             const response = await apiFetch(
                 `/api/v1/presentacion/eliminarPresentacion/${idPresentacion}`,
-                {
-                    method: "DELETE"
-                }
+                { method: "DELETE" }
             );
 
             if (!response.ok) {
@@ -136,120 +172,51 @@ function AdminPresentaciones() {
             }
 
             alert("Presentación eliminada");
-            obtenerPresentaciones();
+           await cargarDatos();
         } catch (error) {
             console.error(error);
             alert("Error al eliminar presentación");
         }
     };
 
-    const manejarCambio = (id, campo, valor) => {
-        setPresentaciones((prev) =>
-            prev.map((presentacion) =>
-                presentacion.id === id
-                    ? {
-                        ...presentacion,
-                        [campo]: valor
-                    }
-                    : presentacion
-            )
+    const productoTemplate = (presentacion) => {
+        const producto = productos.find(
+            (producto) => Number(producto.id) === Number(presentacion.idProducto)
+        );
+
+        return producto ? producto.nombre : "Sin producto";
+    };
+
+    const precioTemplate = (presentacion) => {
+        return `$${presentacion.precio}`;
+    };
+
+    const accionesTemplate = (presentacion) => {
+        return (
+            <div className="acciones-producto">
+                <Button
+                    label="Editar"
+                    size="small"
+                    className="btn-editar-tabla"
+                    onClick={() => {
+                        setPresentacionEditando({
+                            ...presentacion,
+                            idProducto: obtenerIdProducto(presentacion)
+                        });
+
+                        setDialogVisible(true);
+                    }}
+                />
+
+                <Button
+                    label="Eliminar"
+                    size="small"
+                    className="btn-eliminar-tabla"
+                    onClick={() => eliminarPresentacion(presentacion.id)}
+                />
+            </div>
         );
     };
-
-    const convertirABase64 = (archivo) => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-
-            reader.readAsDataURL(archivo);
-
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = (error) => reject(error);
-        });
-    };
-
-    const manejarImagen = async (e) => {
-        const archivo = e.target.files[0];
-
-        if (!archivo) return;
-
-        const base64 = await convertirABase64(archivo);
-
-        setImagenProducto({
-            ...imagenProducto,
-            nombre: archivo.name,
-            extension: archivo.type,
-            imagen: base64
-        });
-    };
-
-    const subirImagen = async (presentacion) => {
-        try {
-            if (!imagenProducto.imagen) {
-                return true;
-            }
-
-            if (
-                idPresentacionImagen !== null &&
-                idPresentacionImagen !== presentacion.id
-            ) {
-                return true;
-            }
-
-            const imagenParaEnviar = {
-                ...imagenProducto,
-                idProducto: presentacion.idProducto,
-                idPresentacion: presentacion.id
-            };
-
-            const response = await apiFetch(
-                "/api/v1/imagenProducto/crearImagen",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify(imagenParaEnviar)
-                }
-            );
-
-            if (!response.ok) {
-                throw new Error("Error al subir imagen");
-            }
-
-            alert("Imagen subida correctamente");
-
-            setImagenProducto({
-                nombre: "",
-                extension: "",
-                imagen: "",
-                esPrincipal: false,
-                idProducto: "",
-                idPresentacion: ""
-            });
-
-            setIdPresentacionImagen(null);
-
-            return true;
-        } catch (error) {
-            console.error(error);
-            alert("Error al subir imagen");
-            return false;
-        }
-    };
-
-    const crearPresentacionCompleta = async () => {
-        const presentacionCreada = await crearPresentacion();
-
-        if (!presentacionCreada) {
-            return;
-        }
-
-        await subirImagen(presentacionCreada);
-    };
-
-    if (loading) {
-        return <div className="p-10 text-xl">Cargando presentaciones...</div>;
-    }
 
     return (
         <div className="max-w-7xl mx-auto p-6">
@@ -263,8 +230,10 @@ function AdminPresentaciones() {
                 </div>
             </div>
 
-            <div className="bg-white shadow-lg p-6 mb-8 border">
-                <h2 className="text-2xl font-bold mb-4">Agregar presentación</h2>
+            <div className="bg-white shadow-lg p-6 mb-8 border rounded-lg">
+                <h2 className="text-2xl font-bold mb-4">
+                    Agregar presentación
+                </h2>
 
                 <datalist id="sugerencias-descripcion-presentacion">
                     {SUGERENCIAS_DESCRIPCION.map((opcion) => (
@@ -273,38 +242,33 @@ function AdminPresentaciones() {
                 </datalist>
 
                 <div className="grid md:grid-cols-6 gap-4">
-                    <div className="flex flex-col gap-1">
-                        <input
-                            type="text"
-                            list="sugerencias-descripcion-presentacion"
-                            placeholder="Descripción"
-                            value={nuevaPresentacion.descripcion}
-                            onChange={(e) =>
-                                setNuevaPresentacion({
-                                    ...nuevaPresentacion,
-                                    descripcion: e.target.value
-                                })
-                            }
-                            className="border p-3 rounded-lg"
-                        />
-
-                    </div>
-
-                    <input
-                        type="number"
-                        placeholder="Cantidad"
-                        value={nuevaPresentacion.cantidad}
+                    <InputText
+                        className="input-crear-producto"
+                        list="sugerencias-descripcion-presentacion"
+                        placeholder="Descripción"
+                        value={nuevaPresentacion.descripcion}
                         onChange={(e) =>
                             setNuevaPresentacion({
                                 ...nuevaPresentacion,
-                                cantidad: e.target.value
+                                descripcion: e.target.value
                             })
                         }
-                        className="border p-3 rounded-lg"
                     />
 
-                    <input
-                        type="text"
+                    <InputNumber
+                        className="input-crear-producto"
+                        placeholder="Cantidad"
+                        value={nuevaPresentacion.cantidad}
+                        onValueChange={(e) =>
+                            setNuevaPresentacion({
+                                ...nuevaPresentacion,
+                                cantidad: e.value
+                            })
+                        }
+                    />
+
+                    <InputText
+                        className="input-crear-producto"
                         placeholder="Unidad"
                         value={nuevaPresentacion.unidadMedida}
                         onChange={(e) =>
@@ -313,145 +277,193 @@ function AdminPresentaciones() {
                                 unidadMedida: e.target.value
                             })
                         }
-                        className="border p-3 rounded-lg"
                     />
 
-                    <input
-                        type="number"
+                    <InputNumber
+                        className="input-crear-producto"
                         placeholder="Precio"
                         value={nuevaPresentacion.precio}
+                        onValueChange={(e) =>
+                            setNuevaPresentacion({
+                                ...nuevaPresentacion,
+                                precio: e.value
+                            })
+                        }
+                    />
+
+                    <Dropdown
+                        className="input-crear-producto"
+                        value={nuevaPresentacion.idProducto}
+                        options={productos}
+                        optionLabel="nombre"
+                        optionValue="id"
+                        placeholder="Producto"
                         onChange={(e) =>
                             setNuevaPresentacion({
                                 ...nuevaPresentacion,
-                                precio: e.target.value
+                                idProducto: e.value
                             })
                         }
-                        className="border p-3 rounded-lg"
                     />
 
-                    <select
-                        value={nuevaPresentacion.idProducto}
-                        onChange={(e) => {
-                            setNuevaPresentacion({
-                                ...nuevaPresentacion,
-                                idProducto: e.target.value
-                            });
-
-                            setImagenProducto({
-                                ...imagenProducto,
-                                idProducto: e.target.value
-                            });
-                        }}
-                        className="border p-3 rounded-lg"
-                    >
-                        <option value="">Producto</option>
-                        {productos.map((producto) => (
-                            <option key={producto.id} value={producto.id}>
-                                {producto.nombre}
-                            </option>
-                        ))}
-                    </select>
-
-                    <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                            manejarImagen(e);
-                        }}
+                    <Button
+                        label="Crear"
+                        icon="pi pi-plus"
+                        className="btn-crear-producto"
+                        onClick={crearPresentacion}
                     />
-
-                    <button
-                        onClick={crearPresentacionCompleta}
-                        className="bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg px-4 py-3"
-                    >
-                        Crear
-                    </button>
                 </div>
             </div>
 
-            <div className="grid gap-6">
-                {presentaciones.map((presentacion) => (
-                    <div
-                        key={presentacion.id}
-                        className="bg-white shadow-lg border border-gray-200 p-6"
-                    >
-                        <div className="grid md:grid-cols-6 gap-4">
-                            <input
-                                type="text"
-                                value={presentacion.descripcion}
+            <div className="bg-white shadow-xl p-6 border border-gray-200 rounded-lg">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900">
+                        Lista de presentaciones
+                    </h2>
+
+                    <div className="flex items-center gap-2">
+                        <label className="text-sm text-gray-700">Buscar:</label>
+
+                        <InputText
+                            className="p-inputtext-sm w-64"
+                            placeholder="Buscar presentación..."
+                            value={globalFilter}
+                            onChange={(e) => setGlobalFilter(e.target.value)}
+                        />
+                    </div>
+                </div>
+
+                <DataTable
+                    value={presentaciones}
+                    loading={loading}
+                    paginator
+                    rows={5}
+                    rowsPerPageOptions={[5, 10, 20]}
+                    globalFilter={globalFilter}
+                    emptyMessage="No hay presentaciones registradas"
+                    stripedRows
+                    showGridlines
+                    className="p-datatable-sm tabla-productos"
+                    tableStyle={{ minWidth: "60rem" }}
+                    paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
+                >
+                    <Column field="id" header="#" sortable style={{ width: "70px" }} />
+                    <Column field="descripcion" header="Descripción" sortable />
+                    <Column field="cantidad" header="Cantidad" sortable />
+                    <Column field="unidadMedida" header="Unidad" sortable />
+                    <Column field="precio" header="Precio" body={precioTemplate} sortable />
+                    <Column header="Producto" body={productoTemplate} sortable />
+                    <Column
+                        header="Acciones"
+                        body={accionesTemplate}
+                        style={{ width: "230px" }}
+                    />
+                </DataTable>
+            </div>
+
+            <Dialog
+                header="Editar presentación"
+                visible={dialogVisible}
+                modal
+                className="dialog-producto"
+                style={{ width: "720px" }}
+                onHide={() => setDialogVisible(false)}
+                footer={
+                    <div className="footer-dialog-producto">
+                        <Button
+                            label="Cancelar"
+                            icon="pi pi-times"
+                            className="btn-cancelar-dialog"
+                            onClick={() => setDialogVisible(false)}
+                        />
+
+                        <Button
+                            label="Guardar cambios"
+                            icon="pi pi-save"
+                            className="btn-guardar-dialog"
+                            onClick={actualizarPresentacion}
+                        />
+                    </div>
+                }
+            >
+                {presentacionEditando && (
+                    <div className="form-editar-producto">
+                        <div className="campo-editar">
+                            <label>Descripción</label>
+                            <InputText
+                                className="input-editar"
+                                value={presentacionEditando.descripcion}
                                 onChange={(e) =>
-                                    manejarCambio(presentacion.id, "descripcion", e.target.value)
+                                    setPresentacionEditando({
+                                        ...presentacionEditando,
+                                        descripcion: e.target.value
+                                    })
                                 }
-                                className="border p-3 rounded-lg"
                             />
+                        </div>
 
-                            <input
-                                type="number"
-                                value={presentacion.cantidad}
+                        <div className="campo-editar">
+                            <label>Cantidad</label>
+                            <InputNumber
+                                className="input-editar"
+                                value={Number(presentacionEditando.cantidad)}
+                                onValueChange={(e) =>
+                                    setPresentacionEditando({
+                                        ...presentacionEditando,
+                                        cantidad: e.value
+                                    })
+                                }
+                            />
+                        </div>
+
+                        <div className="campo-editar">
+                            <label>Unidad</label>
+                            <InputText
+                                className="input-editar"
+                                value={presentacionEditando.unidadMedida}
                                 onChange={(e) =>
-                                    manejarCambio(presentacion.id, "cantidad", e.target.value)
+                                    setPresentacionEditando({
+                                        ...presentacionEditando,
+                                        unidadMedida: e.target.value
+                                    })
                                 }
-                                className="border p-3 rounded-lg"
                             />
+                        </div>
 
-                            <input
-                                type="text"
-                                value={presentacion.unidadMedida}
+                        <div className="campo-editar">
+                            <label>Precio</label>
+                            <InputNumber
+                                className="input-editar"
+                                value={Number(presentacionEditando.precio)}
+                                onValueChange={(e) =>
+                                    setPresentacionEditando({
+                                        ...presentacionEditando,
+                                        precio: e.value
+                                    })
+                                }
+                            />
+                        </div>
+
+                        <div className="campo-editar">
+                            <label>Producto</label>
+                            <Dropdown
+                                className="dropdown-editar"
+                                value={presentacionEditando.idProducto}
+                                options={productos}
+                                optionLabel="nombre"
+                                optionValue="id"
+                                placeholder="Seleccionar producto"
                                 onChange={(e) =>
-                                    manejarCambio(presentacion.id, "unidadMedida", e.target.value)
+                                    setPresentacionEditando({
+                                        ...presentacionEditando,
+                                        idProducto: e.value
+                                    })
                                 }
-                                className="border p-3 rounded-lg"
                             />
-
-                            <input
-                                type="number"
-                                value={presentacion.precio}
-                                onChange={(e) =>
-                                    manejarCambio(presentacion.id, "precio", e.target.value)
-                                }
-                                className="border p-3 rounded-lg"
-                            />
-
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={manejarImagen}
-                                className="border p-3 rounded-lg"
-                            />
-
-                            <select
-                                value={presentacion.idProducto}
-                                onChange={(e) =>
-                                    manejarCambio(presentacion.id, "idProducto", e.target.value)
-                                }
-                                className="border p-3 rounded-lg"
-                            >
-                                {productos.map((producto) => (
-                                    <option key={producto.id} value={producto.id}>
-                                        {producto.nombre}
-                                    </option>
-                                ))}
-                            </select>
-
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => actualizarPresentacion(presentacion)}
-                                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold w-full"
-                                >
-                                    Guardar
-                                </button>
-
-                                <button
-                                    onClick={() => eliminarPresentacion(presentacion.id)}
-                                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold w-full"
-                                >
-                                    Eliminar
-                                </button>
-                            </div>
                         </div>
                     </div>
-                ))}
-            </div>
+                )}
+            </Dialog>
         </div>
     );
 }
