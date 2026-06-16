@@ -7,7 +7,7 @@ function AdminPedidos() {
     const [loading, setLoading] = useState(true);
 
     const [estados, setEstados] = useState([]);
-    const [filtroEstado, setFiltroEstado] = useState("Pendiente");
+    const [filtroEstado, setFiltroEstado] = useState("en_espera");
 
     const [estadoSeleccionado, setEstadoSeleccionado] = useState({});
 
@@ -125,16 +125,34 @@ function AdminPedidos() {
 
     const getStatusColor = (estado) => {
         switch (estado) {
-            case "Pendiente":
+            case "en_espera":
                 return "bg-yellow-400 text-black";
-            case "En proceso":
+            case "en_preparacion":
                 return "bg-blue-400 text-black";
-            case "Entregado":
+            case "entregado":
                 return "bg-green-400 text-black";
-            case "Cancelado":
+            case "rechazado":
                 return "bg-red-400 text-black";
             default:
                 return "bg-gray-400 text-black";
+        }
+    };
+    const getStatusLabel = (estado) => {
+        switch (estado) {
+            case "en_espera":
+                return "En Espera";
+
+            case "en_preparacion":
+                return "En Preparación";
+
+            case "entregado":
+                return "Entregado";
+
+            case "rechazado":
+                return "Rechazado";
+
+            default:
+                return estado;
         }
     };
 
@@ -247,7 +265,7 @@ function AdminPedidos() {
                                             ${getStatusColor(pedido.estado)}
                                         `}
                                     >
-                                        {pedido.estado}
+                                        {getStatusLabel(pedido.estado)}
                                     </span>
 
                                 </div>
