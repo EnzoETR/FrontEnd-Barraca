@@ -7,7 +7,7 @@ function AdminPedidos() {
     const [loading, setLoading] = useState(true);
 
     const [estados, setEstados] = useState([]);
-    const [filtroEstado, setFiltroEstado] = useState("");
+    const [filtroEstado, setFiltroEstado] = useState("en_espera");
 
     const [estadoSeleccionado, setEstadoSeleccionado] = useState({});
 
@@ -71,7 +71,9 @@ function AdminPedidos() {
             const idEstado = estadoSeleccionado[idPedido];
 
             if (!idEstado) {
+
                 alert("Selecciona un estado");
+
                 return;
             }
 
@@ -152,7 +154,7 @@ function AdminPedidos() {
         switch (estado) {
             case "en_espera":
                 return "bg-yellow-400 text-black";
-            case "en_proceso":
+            case "en_preparacion":
                 return "bg-blue-400 text-black";
             case "entregado":
                 return "bg-green-400 text-black";

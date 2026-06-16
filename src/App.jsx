@@ -16,6 +16,7 @@ import AdminProductos from "./pages/Admin-productos";
 import Carrito from "./pages/Carrito.jsx";
 import AdminPresentaciones from "./pages/Admin-presentaciones.jsx";
 import MisPedidos from "./pages/Mis-Pedidos.jsx";
+import AdminEstadisticas from "./pages/Admin-estadisticas.jsx";
 
 function App() {
   return (
@@ -44,6 +45,7 @@ function App() {
             <Route path="crearPedido" element={<AdminCrearPedidos />} />
             <Route path="productos" element={<AdminProductos />} />
               <Route path="presentacion" element={<AdminPresentaciones />} />
+            <Route path="estadisticas" element={<AdminEstadisticas />} />
           </Route>
         </Routes>
       </BrowserRouter>

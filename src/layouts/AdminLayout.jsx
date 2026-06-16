@@ -42,6 +42,12 @@ function AdminLayout() {
                   >
                 Presentacion
             </Link>
+          <Link
+            to="/admin/estadisticas"
+            className="block p-3 rounded-lg hover:bg-gray-800"
+          >
+            Estadísticas
+          </Link>
 
 
           <Link
