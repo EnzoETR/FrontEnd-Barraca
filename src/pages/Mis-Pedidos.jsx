@@ -18,6 +18,8 @@ function MisPedidos() {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 8;
 
+    const [imagenes, setImagenes] = useState([]);
+
     useEffect(() => {
 
         if (!usuario) {
@@ -28,6 +30,7 @@ function MisPedidos() {
 
         obtenerPedidos();
         obtenerEstados();
+        obtenerImagenes();
 
     }, [usuario]);
 
@@ -77,6 +80,23 @@ function MisPedidos() {
         }
     };
 
+    const obtenerImagenes = async () => {
+        try {
+            const response = await apiFetch("/api/v1/imagenProducto/listarImagenes");
+            const data = await response.json();
+
+            setImagenes(data);
+        } catch (error) {
+            console.error("Error al obtener imágenes:", error);
+        }
+    };
+
+    const obtenerImagenPresentacion = (idPresentacion) => {
+        return imagenes.find(
+            (imagen) => Number(imagen.idPresentacion) === Number(idPresentacion)
+        );
+    };
+
     const abrirModal = (pedido) => {
         setPedidoSeleccionado(pedido);
         setModalAbierto(true);
@@ -119,6 +139,63 @@ function MisPedidos() {
             default:
                 return "bg-gray-400 text-black";
         }
+    };
+
+    const rehacerPedido = (pedido) => {
+        const nuevoCarrito = [];
+
+        pedido.detalles?.forEach((detalle) => {
+            const idPresentacion = detalle.idPresentacion;
+
+            const cantidadDetalle = Number(detalle.cantidad);
+            const subtotalDetalle = Number(detalle.subtotal);
+            const precioUnitario = subtotalDetalle / cantidadDetalle;
+
+            const imagenProducto = obtenerImagenPresentacion(idPresentacion);
+
+            const itemExistente = nuevoCarrito.find(
+                (item) => Number(item.idPresentacion) === Number(idPresentacion)
+            );
+
+            if (itemExistente) {
+                itemExistente.cantidad += cantidadDetalle;
+                itemExistente.subtotal += subtotalDetalle;
+
+                if (detalle.tipoUso) {
+                    itemExistente.detallesUso.push({
+                        tipoUso: detalle.tipoUso,
+                        cantidad: cantidadDetalle
+                    });
+                }
+            } else {
+                nuevoCarrito.push({
+                    idPresentacion: idPresentacion,
+
+                    // Sacamos cantidadPresentacion de acá
+                    descripcion: `${detalle.nombrePresentacion}`,
+
+                    precio: precioUnitario,
+                    cantidad: cantidadDetalle,
+                    subtotal: subtotalDetalle,
+
+                    // Igual que en catálogo
+                    imagenProducto: imagenProducto?.imagen,
+
+                    detallesUso: detalle.tipoUso
+                        ? [
+                            {
+                                tipoUso: detalle.tipoUso,
+                                cantidad: cantidadDetalle
+                            }
+                        ]
+                        : []
+                });
+            }
+        });
+
+        localStorage.setItem("carrito", JSON.stringify(nuevoCarrito));
+
+        cerrarModal();
     };
 
     const formatearEstado = (estado) => {
@@ -560,6 +637,23 @@ function MisPedidos() {
                         </div>
 
                         <div className="p-4 bg-gray-100 rounded-b-lg flex justify-end">
+
+
+                           <button
+                                onClick={() => rehacerPedido(pedidoSeleccionado)}
+                                className="
+                                    bg-green-500
+                                    hover:bg-green-600
+                                    text-white
+                                    font-semibold
+                                    py-2
+                                    px-6
+                                    rounded-lg
+                                    mr-3
+                                "
+                            >
+                                Rehacer pedido
+                            </button>
 
                             <button
                                 onClick={cerrarModal}
