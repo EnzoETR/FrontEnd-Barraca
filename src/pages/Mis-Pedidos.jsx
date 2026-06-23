@@ -30,7 +30,6 @@ function MisPedidos() {
 
         obtenerPedidos();
         obtenerEstados();
-        obtenerImagenes();
 
     }, [usuario]);
 
@@ -80,21 +79,23 @@ function MisPedidos() {
         }
     };
 
-    const obtenerImagenes = async () => {
+    const obtenerImagenPorPresentacion = async (idPresentacion) => {
         try {
-            const response = await apiFetch("/api/v1/imagenProducto/listarImagenes");
+            const response = await apiFetch(
+                `/api/v1/imagenProducto/presentacion/${idPresentacion}`
+            );
+
+            if (!response.ok) {
+                return null;
+            }
+
             const data = await response.json();
+            return data;
 
-            setImagenes(data);
         } catch (error) {
-            console.error("Error al obtener imágenes:", error);
+            console.error("Error al obtener imagen por presentación:", error);
+            return null;
         }
-    };
-
-    const obtenerImagenPresentacion = (idPresentacion) => {
-        return imagenes.find(
-            (imagen) => Number(imagen.idPresentacion) === Number(idPresentacion)
-        );
     };
 
     const abrirModal = (pedido) => {
@@ -141,17 +142,17 @@ function MisPedidos() {
         }
     };
 
-    const rehacerPedido = (pedido) => {
+    const rehacerPedido = async (pedido) => {
         const nuevoCarrito = [];
 
-        pedido.detalles?.forEach((detalle) => {
+        for (const detalle of pedido.detalles || []) {
             const idPresentacion = detalle.idPresentacion;
 
             const cantidadDetalle = Number(detalle.cantidad);
             const subtotalDetalle = Number(detalle.subtotal);
             const precioUnitario = subtotalDetalle / cantidadDetalle;
 
-            const imagenProducto = obtenerImagenPresentacion(idPresentacion);
+            const imagenProducto = await obtenerImagenPorPresentacion(idPresentacion);
 
             const itemExistente = nuevoCarrito.find(
                 (item) => Number(item.idPresentacion) === Number(idPresentacion)
@@ -171,14 +172,13 @@ function MisPedidos() {
                 nuevoCarrito.push({
                     idPresentacion: idPresentacion,
 
-                    // Sacamos cantidadPresentacion de acá
                     descripcion: `${detalle.nombrePresentacion}`,
 
                     precio: precioUnitario,
                     cantidad: cantidadDetalle,
                     subtotal: subtotalDetalle,
 
-                    // Igual que en catálogo
+
                     imagenProducto: imagenProducto?.imagen,
 
                     detallesUso: detalle.tipoUso
@@ -191,7 +191,7 @@ function MisPedidos() {
                         : []
                 });
             }
-        });
+        }
 
         localStorage.setItem("carrito", JSON.stringify(nuevoCarrito));
 
@@ -652,6 +652,7 @@ function MisPedidos() {
                                     mr-3
                                 "
                             >
+
                                 Rehacer pedido
                             </button>
 
