@@ -43,7 +43,12 @@ function AdminLayout() {
           >
             Estadísticas
           </Link>
-
+          <Link
+            to="/admin/reparto"
+            className="block p-3 rounded-lg hover:bg-gray-800"
+          >
+            Optimizacion de Reparto
+          </Link>
 
           <Link
             to="/catalogo"
