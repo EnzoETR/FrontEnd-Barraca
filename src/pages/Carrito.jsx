@@ -4,26 +4,14 @@ import { apiFetch } from "../services/apiClient";
 import { useAuth } from "../context/AuthContext";
 
 export default function Carrito() {
-
     const { usuario } = useAuth();
 
-   const [carrito, setCarrito] = useState(() => {
-       const carritoGuardado =
-           JSON.parse(localStorage.getItem("carrito")) || [];
+    const [carrito, setCarrito] = useState(() => {
+        return JSON.parse(localStorage.getItem("carrito")) || [];
+    });
 
-       return carritoGuardado.map((item) => ({
-           ...item,
-           detallesUso: item.detallesUso || [
-               {
-                   tipoUso: "",
-                   cantidad: item.cantidad || 1
-               }
-           ]
-       }));
-   });
-
-const [direcciones, setDirecciones] = useState([]);
-
+    const [direcciones, setDirecciones] = useState([]);
+    const [mostrarNuevaDireccion, setMostrarNuevaDireccion] = useState(false);
 
     const [datosCliente, setDatosCliente] = useState({
         nombre: "",
@@ -33,71 +21,12 @@ const [direcciones, setDirecciones] = useState([]);
         referencia: ""
     });
 
-const [mostrarNuevaDireccion, setMostrarNuevaDireccion] = useState(false);
-
-const [nuevaDireccion, setNuevaDireccion] = useState({
-    calle: "",
-    numeroCasa: "",
-    referencia: "",
-    alias: ""
-});
-
-const handleNuevaDireccion = (e) => {
-    setNuevaDireccion({
-        ...nuevaDireccion,
-        [e.target.name]: e.target.value
+    const [nuevaDireccion, setNuevaDireccion] = useState({
+        calle: "",
+        numeroCasa: "",
+        referencia: "",
+        alias: ""
     });
-};
-
-const agregarDireccion = async () => {
-    try {
-        if (!nuevaDireccion.calle || !nuevaDireccion.numeroCasa || !nuevaDireccion.alias) {
-            alert("Complete alias, calle y número de casa");
-            return;
-        }
-
-        const body = {
-            idUsuario: usuario.idUsuario,
-            calle: nuevaDireccion.calle,
-            numeroCasa: Number(nuevaDireccion.numeroCasa),
-            referencia: nuevaDireccion.referencia,
-            alias: nuevaDireccion.alias
-        };
-
-        const response = await apiFetch("/api/v1/direcciones/agregarDireccion", {
-            method: "POST",
-            body: JSON.stringify(body)
-        });
-
-        if (!response.ok) {
-            throw new Error("Error al agregar dirección");
-        }
-
-        const direccionCreada = await response.json();
-
-        setDirecciones([...direcciones, direccionCreada]);
-
-        setPedido({
-            ...pedido,
-            idDireccion: direccionCreada.id
-        });
-
-        setNuevaDireccion({
-            calle: "",
-            numeroCasa: "",
-            referencia: "",
-            alias: ""
-        });
-
-        setMostrarNuevaDireccion(false);
-
-        alert("Dirección agregada correctamente");
-
-    } catch (error) {
-        console.error(error);
-        alert("Error al agregar dirección");
-    }
-};
 
     const [pedido, setPedido] = useState({
         fechaEntrega: "",
@@ -107,147 +36,129 @@ const agregarDireccion = async () => {
     });
 
     const actualizarCarrito = (nuevoCarrito) => {
-
         setCarrito(nuevoCarrito);
-
-        localStorage.setItem(
-            "carrito",
-            JSON.stringify(nuevoCarrito)
-        );
+        localStorage.setItem("carrito", JSON.stringify(nuevoCarrito));
     };
 
-const prepararCarrito = carrito.map((item) => ({
-    ...item,
-    detallesUso: item.detallesUso || [
-        {
-            tipoUso: "",
-            cantidad: item.cantidad || 1
-        }
-    ]
-}));
+    useEffect(() => {
+        const cargarTipoUsoProductos = async () => {
+            try {
+                const responseProductos = await apiFetch("/api/v1/producto/listarProducto");
+                const productos = await responseProductos.json();
 
-const recalcularSubtotal = (detallesUso, precio) => {
-    const cantidadTotal = detallesUso.reduce(
-        (total, detalle) => total + Number(detalle.cantidad),
-        0
-    );
+                const responsePresentaciones = await apiFetch("/api/v1/presentacion/listarPresentacion");
+                const presentaciones = await responsePresentaciones.json();
 
-    return cantidadTotal * precio;
-};
+                const carritoActualizado = carrito.map((item) => {
+                    const presentacion = presentaciones.find(
+                        (presentacion) => presentacion.id === item.idPresentacion
+                    );
 
-const agregarDetalleUso = (id) => {
-    const nuevoCarrito = carrito.map((item) => {
+                    const producto = productos.find(
+                        (producto) => producto.id === presentacion?.idProducto
+                    );
 
-        if (item.idPresentacion === id) {
+                    const usaTipoUso = producto?.usaTipoUso || false;
 
-            const nuevosDetallesUso = [
-                ...item.detallesUso,
-                {
-                    tipoUso: "",
-                    cantidad: 1
-                }
-            ];
+                    const unidadMedida = presentacion?.unidadMedida;
+                    const minimo = unidadMedida === "kg" ? 50 : 1;
 
-            return {
-                ...item,
-                detallesUso: nuevosDetallesUso,
-                cantidad: nuevosDetallesUso.reduce(
-                    (total, detalle) => total + Number(detalle.cantidad),
-                    0
-                ),
-                subtotal: recalcularSubtotal(
-                    nuevosDetallesUso,
-                    item.precio
-                )
-            };
-        }
+                    const cantidadActual =
+                        item.cantidad && item.cantidad >= minimo
+                            ? item.cantidad
+                            : minimo;
 
-        return item;
-    });
+                    return {
+                        ...item,
+                        idProducto: presentacion?.idProducto,
+                        unidadMedida,
+                        usaTipoUso,
+                        cantidad: cantidadActual,
+                        subtotal: cantidadActual * item.precio,
+                        detallesUso: usaTipoUso
+                            ? item.detallesUso?.length > 0
+                                ? item.detallesUso.map((detalle) => ({
+                                    ...detalle,
+                                    cantidad:
+                                        detalle.cantidad && detalle.cantidad >= minimo
+                                            ? detalle.cantidad
+                                            : minimo
+                                }))
+                                : [
+                                    {
+                                        tipoUso: "",
+                                        cantidad: minimo
+                                    }
+                                ]
+                            : []
+                    };
+                });
 
-    actualizarCarrito(nuevoCarrito);
-};
+                actualizarCarrito(carritoActualizado);
 
-const cambiarDetalleUso = (id, index, campo, valor) => {
-    const nuevoCarrito = carrito.map((item) => {
-
-        if (item.idPresentacion === id) {
-
-            const nuevosDetallesUso = [...item.detallesUso];
-
-            nuevosDetallesUso[index] = {
-                ...nuevosDetallesUso[index],
-                [campo]: valor
-            };
-
-            return {
-                ...item,
-                detallesUso: nuevosDetallesUso,
-                cantidad: nuevosDetallesUso.reduce(
-                    (total, detalle) => total + Number(detalle.cantidad),
-                    0
-                ),
-                subtotal: recalcularSubtotal(
-                    nuevosDetallesUso,
-                    item.precio
-                )
-            };
-        }
-
-        return item;
-    });
-
-    actualizarCarrito(nuevoCarrito);
-};
-
-const eliminarDetalleUso = (idPresentacion, index) => {
-
-    const nuevoCarrito = carrito.map((item) => {
-
-        if (item.idPresentacion === idPresentacion) {
-
-            if (item.detallesUso.length === 1) {
-                return item;
+            } catch (error) {
+                console.error("Error al cargar tipo de uso:", error);
             }
+        };
 
-            const nuevosDetalles = item.detallesUso.filter(
-                (_, i) => i !== index
-            );
-
-            return {
-                ...item,
-                detallesUso: nuevosDetalles,
-                cantidad: nuevosDetalles.reduce(
-                    (total, detalle) => total + Number(detalle.cantidad),
-                    0
-                ),
-                subtotal: recalcularSubtotal(
-                    nuevosDetalles,
-                    item.precio
-                )
-            };
+        if (carrito.length > 0) {
+            cargarTipoUsoProductos();
         }
+    }, []);
 
-        return item;
-    });
+    useEffect(() => {
+        const cargarDirecciones = async () => {
+            if (!usuario) return;
 
-    actualizarCarrito(nuevoCarrito);
-};
+            try {
+                const response = await apiFetch(
+                    `/api/v1/direcciones/usuario/${usuario.idUsuario}`
+                );
 
-    const aumentarCantidad = (id) => {
+                const data = await response.json();
+                setDirecciones(data);
 
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        cargarDirecciones();
+    }, [usuario]);
+
+    const recalcularSubtotal = (detallesUso, precio) => {
+        const cantidadTotal = detallesUso.reduce(
+            (total, detalle) => total + Number(detalle.cantidad),
+            0
+        );
+
+        return cantidadTotal * precio;
+    };
+
+    const agregarDetalleUso = (idPresentacion) => {
         const nuevoCarrito = carrito.map((item) => {
+            if (item.idPresentacion === idPresentacion) {
+                const tiposUso = ["estufa", "parrilla", "calefactor", "quematuti"];
 
-            if (item.idPresentacion === id) {
-
-                const nuevaCantidad =
-                    item.cantidad + 1;
+                if (item.detallesUso.length >= tiposUso.length) {
+                    return item;
+                }
+                const nuevosDetallesUso = [
+                    ...item.detallesUso,
+                    {
+                        tipoUso: "",
+                        cantidad: item.unidadMedida === "kg" ? 50 : 1
+                    }
+                ];
 
                 return {
                     ...item,
-                    cantidad: nuevaCantidad,
-                    subtotal:
-                        nuevaCantidad * item.precio
+                    detallesUso: nuevosDetallesUso,
+                    cantidad: nuevosDetallesUso.reduce(
+                        (total, detalle) => total + Number(detalle.cantidad),
+                        0
+                    ),
+                    subtotal: recalcularSubtotal(nuevosDetallesUso, item.precio)
                 };
             }
 
@@ -257,50 +168,97 @@ const eliminarDetalleUso = (idPresentacion, index) => {
         actualizarCarrito(nuevoCarrito);
     };
 
-    const disminuirCantidad = (id) => {
+    const cambiarDetalleUso = (idPresentacion, index, campo, valor) => {
+        const nuevoCarrito = carrito.map((item) => {
+            if (item.idPresentacion === idPresentacion) {
+                const minimo = item.unidadMedida === "kg" ? 50 : 1;
 
-        let nuevoCarrito = carrito.map((item) => {
+                const valorFinal =
+                    campo === "cantidad" && valor < minimo
+                        ? minimo
+                        : valor;
+                const nuevosDetallesUso = [...item.detallesUso];
 
-            if (item.idPresentacion === id) {
-
-                const nuevaCantidad =
-                    item.cantidad - 1;
+                nuevosDetallesUso[index] = {
+                    ...nuevosDetallesUso[index],
+                    [campo]: valorFinal
+                };
 
                 return {
                     ...item,
-                    cantidad: nuevaCantidad,
-                    subtotal:
-                        nuevaCantidad * item.precio
+                    detallesUso: nuevosDetallesUso,
+                    cantidad: nuevosDetallesUso.reduce(
+                        (total, detalle) => total + Number(detalle.cantidad),
+                        0
+                    ),
+                    subtotal: recalcularSubtotal(nuevosDetallesUso, item.precio)
                 };
             }
 
             return item;
         });
 
-        nuevoCarrito = nuevoCarrito.filter(
-            (item) => item.cantidad > 0
-        );
+        actualizarCarrito(nuevoCarrito);
+    };
+
+    const eliminarDetalleUso = (idPresentacion, index) => {
+        const nuevoCarrito = carrito.map((item) => {
+            if (item.idPresentacion === idPresentacion) {
+                if (item.detallesUso.length === 1) return item;
+
+                const nuevosDetallesUso = item.detallesUso.filter(
+                    (_, i) => i !== index
+                );
+
+                return {
+                    ...item,
+                    detallesUso: nuevosDetallesUso,
+                    cantidad: nuevosDetallesUso.reduce(
+                        (total, detalle) => total + Number(detalle.cantidad),
+                        0
+                    ),
+                    subtotal: recalcularSubtotal(nuevosDetallesUso, item.precio)
+                };
+            }
+
+            return item;
+        });
 
         actualizarCarrito(nuevoCarrito);
     };
 
-    const eliminarProducto = (id) => {
+    const cambiarCantidadSimple = (idPresentacion, cantidad) => {
+        const nuevoCarrito = carrito.map((item) => {
+            if (item.idPresentacion === idPresentacion) {
+                const minimo = item.unidadMedida === "kg" ? 50 : 1;
 
+                const cantidadFinal =
+                    cantidad < minimo
+                        ? minimo
+                        : cantidad;
+
+                return {
+                    ...item,
+                    cantidad: cantidadFinal,
+                    subtotal: cantidadFinal * item.precio
+                };
+            }
+
+            return item;
+        });
+
+        actualizarCarrito(nuevoCarrito);
+    };
+
+    const eliminarProducto = (idPresentacion) => {
         const nuevoCarrito = carrito.filter(
-            (item) => item.idPresentacion !== id
+            (item) => item.idPresentacion !== idPresentacion
         );
 
         actualizarCarrito(nuevoCarrito);
     };
-
-    const total = carrito.reduce(
-        (acumulador, item) =>
-            acumulador + item.subtotal,
-        0
-    );
 
     const handleDatosCliente = (e) => {
-
         setDatosCliente({
             ...datosCliente,
             [e.target.name]: e.target.value
@@ -308,26 +266,100 @@ const eliminarDetalleUso = (idPresentacion, index) => {
     };
 
     const handlePedido = (e) => {
-
         setPedido({
             ...pedido,
             [e.target.name]: e.target.value
         });
     };
 
-    const crearPedido = async (e) => {
+    const handleNuevaDireccion = (e) => {
+        setNuevaDireccion({
+            ...nuevaDireccion,
+            [e.target.name]: e.target.value
+        });
+    };
 
+    const agregarDireccion = async () => {
+        try {
+            if (!nuevaDireccion.calle || !nuevaDireccion.numeroCasa || !nuevaDireccion.alias) {
+                alert("Complete alias, calle y número de casa");
+                return;
+            }
+
+            const body = {
+                idUsuario: usuario.idUsuario,
+                calle: nuevaDireccion.calle,
+                numeroCasa: Number(nuevaDireccion.numeroCasa),
+                referencia: nuevaDireccion.referencia,
+                alias: nuevaDireccion.alias
+            };
+
+            const response = await apiFetch("/api/v1/direcciones/agregarDireccion", {
+                method: "POST",
+                body: JSON.stringify(body)
+            });
+
+            if (!response.ok) {
+                throw new Error("Error al agregar dirección");
+            }
+
+            const direccionCreada = await response.json();
+
+            setDirecciones([...direcciones, direccionCreada]);
+
+            setPedido({
+                ...pedido,
+                idDireccion: direccionCreada.id
+            });
+
+            setNuevaDireccion({
+                calle: "",
+                numeroCasa: "",
+                referencia: "",
+                alias: ""
+            });
+
+            setMostrarNuevaDireccion(false);
+
+            alert("Dirección agregada correctamente");
+
+        } catch (error) {
+            console.error(error);
+            alert("Error al agregar dirección");
+        }
+    };
+
+    const crearPedido = async (e) => {
         e.preventDefault();
 
         try {
-
-            const detalles = carrito.flatMap((item) =>
-                item.detallesUso.map((detalle) => ({
-                    idPresentacion: item.idPresentacion,
-                    cantidad: Number(detalle.cantidad),
-                    tipoUso: detalle.tipoUso
-                }))
+            const faltaTipoUso = carrito.some((item) =>
+                item.usaTipoUso &&
+                item.detallesUso.some((detalle) => !detalle.tipoUso)
             );
+
+            if (faltaTipoUso) {
+                alert("Seleccione el tipo de uso en todos los productos que lo requieren");
+                return;
+            }
+
+            const detalles = carrito.flatMap((item) => {
+                if (item.usaTipoUso) {
+                    return item.detallesUso.map((detalle) => ({
+                        idPresentacion: item.idPresentacion,
+                        cantidad: Number(detalle.cantidad),
+                        tipoUso: detalle.tipoUso
+                    }));
+                }
+
+                return [
+                    {
+                        idPresentacion: item.idPresentacion,
+                        cantidad: Number(item.cantidad),
+                        tipoUso: null
+                    }
+                ];
+            });
 
             let body = {
                 fechaEntrega: pedido.fechaEntrega,
@@ -336,7 +368,16 @@ const eliminarDetalleUso = (idPresentacion, index) => {
                 detalles
             };
 
+            if (!pedido.horarioEntrega) {
+                alert("Seleccione un horario");
+                return;
+            }
+
             if (usuario) {
+                if (!pedido.idDireccion) {
+                    alert("Seleccione una dirección");
+                    return;
+                }
 
                 body = {
                     ...body,
@@ -345,58 +386,46 @@ const eliminarDetalleUso = (idPresentacion, index) => {
                 };
 
             } else {
-
-                body = {
-                    ...body,
-
-                    clienteAnonimo: {
-                        nombre: datosCliente.nombre,
-                        telefono: datosCliente.telefono,
-                        calle: datosCliente.calle,
-                        numeroCasa:
-                            datosCliente.numeroCasa,
-                        referencia:
-                            datosCliente.referencia
-                    }
-                };
-            }
-
-            if (!pedido.horarioEntrega) {
-                alert("Seleccione un horario");
-                return;
-            }
-
-            if (!usuario) {
                 const { nombre, telefono, calle, numeroCasa } = datosCliente;
+
                 if (!nombre || !telefono || !calle || !numeroCasa) {
                     alert("Complete nombre, teléfono, calle y número de casa");
                     return;
                 }
-            } else if (!pedido.idDireccion) {
-                alert("Seleccione una dirección");
-                return;
+
+                body = {
+                    ...body,
+                    clienteAnonimo: {
+                        nombre: datosCliente.nombre,
+                        telefono: datosCliente.telefono,
+                        calle: datosCliente.calle,
+                        numeroCasa: datosCliente.numeroCasa,
+                        referencia: datosCliente.referencia
+                    }
+                };
             }
 
+            console.log("BODY QUE SE ENVIA:", body);
+
             const opcionesFetch = usuario
-                ? { method: "POST", body: JSON.stringify(body) }
+                ? {
+                    method: "POST",
+                    body: JSON.stringify(body)
+                }
                 : {
                     method: "POST",
                     body: JSON.stringify(body),
                     publico: true,
-                    credenciales: true,
+                    credenciales: true
                 };
 
-console.log("BODY QUE SE ENVIA:", body);
             const response = await apiFetch(
                 "/api/v1/pedidos/crearPedido",
                 opcionesFetch
             );
 
             if (!response.ok) {
-
-                throw new Error(
-                    "Error al crear pedido"
-                );
+                throw new Error("Error al crear pedido");
             }
 
             await response.json();
@@ -404,75 +433,40 @@ console.log("BODY QUE SE ENVIA:", body);
             alert("Pedido creado correctamente");
 
             localStorage.removeItem("carrito");
-
             setCarrito([]);
 
         } catch (error) {
-
             console.error(error);
-
             alert("Error al crear pedido");
         }
     };
 
+    const total = carrito.reduce(
+        (acumulador, item) => acumulador + item.subtotal,
+        0
+    );
+
     const ahora = new Date();
 
-    const fechaMinima =
-        new Date(
-            ahora.getTime() -
-            ahora.getTimezoneOffset() * 60000
-        )
-            .toISOString()
-            .slice(0, 10);
-
-    useEffect(() => {
-
-        const cargarDirecciones = async () => {
-
-            if (!usuario) return;
-
-            try {
-
-                const response = await apiFetch(
-                    `/api/v1/direcciones/usuario/${usuario.idUsuario}`
-                );
-
-                const data = await response.json();
-
-                setDirecciones(data);
-
-            } catch (error) {
-
-                console.error(error);
-            }
-        };
-
-        cargarDirecciones();
-
-    }, [usuario]);
+    const fechaMinima = new Date(
+        ahora.getTime() - ahora.getTimezoneOffset() * 60000
+    )
+        .toISOString()
+        .slice(0, 10);
 
     return (
         <div className="min-h-screen flex flex-col">
-
             <main className="flex-grow p-6 max-w-6xl mx-auto w-full">
-
                 <h1 className="text-3xl font-bold mb-6">
                     Carrito
                 </h1>
 
                 {carrito.length === 0 ? (
-
-                    <p>
-                        No hay productos en el carrito.
-                    </p>
-
+                    <p>No hay productos en el carrito.</p>
                 ) : (
-
                     <>
                         <div className="flex flex-wrap gap-8 justify-center mt-10">
-
                             {carrito.map((item) => (
-
                                 <FichaCarrito
                                     key={item.idPresentacion}
                                     item={item}
@@ -480,31 +474,21 @@ console.log("BODY QUE SE ENVIA:", body);
                                     cambiarDetalleUso={cambiarDetalleUso}
                                     eliminarDetalleUso={eliminarDetalleUso}
                                     eliminarProducto={eliminarProducto}
+                                    cambiarCantidadSimple={cambiarCantidadSimple}
                                 />
                             ))}
-
                         </div>
 
                         <form
                             onSubmit={crearPedido}
-                            className="
-                                mt-12
-                                bg-gray-100
-                                p-6
-                                rounded-xl
-                                shadow-md
-                            "
+                            className="mt-12 bg-gray-100 p-6 rounded-xl shadow-md"
                         >
-
                             <h2 className="text-2xl font-bold mb-6">
                                 Datos del pedido
                             </h2>
 
-                            {/* FECHA Y HORARIO */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-
                                 <div>
-
                                     <label className="block font-semibold mb-2">
                                         Fecha Entrega
                                     </label>
@@ -513,19 +497,13 @@ console.log("BODY QUE SE ENVIA:", body);
                                         type="date"
                                         name="fechaEntrega"
                                         min={fechaMinima}
-                                        value={
-                                            pedido.fechaEntrega
-                                        }
-                                        onChange={
-                                            handlePedido
-                                        }
+                                        value={pedido.fechaEntrega}
+                                        onChange={handlePedido}
                                         className="w-full border p-3 rounded"
                                     />
-
                                 </div>
 
                                 <div>
-
                                     <label className="block font-semibold mb-2">
                                         Horario de entrega
                                     </label>
@@ -536,41 +514,22 @@ console.log("BODY QUE SE ENVIA:", body);
                                         onChange={handlePedido}
                                         className="w-full border p-3 rounded"
                                     >
-
-                                        <option value="">
-                                            Seleccionar horario
-                                        </option>
-
-                                        <option value="Mañana">
-                                            En la mañana
-                                        </option>
-
-                                        <option value="Tarde">
-                                            En la tarde
-                                        </option>
-
+                                        <option value="">Seleccionar horario</option>
+                                        <option value="Mañana">En la mañana</option>
+                                        <option value="Tarde">En la tarde</option>
                                     </select>
-
                                 </div>
-
                             </div>
 
-                            {/* CLIENTE ANONIMO */}
                             {!usuario ? (
-
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
                                     <input
                                         type="text"
                                         name="nombre"
                                         placeholder="Nombre *"
                                         required
-                                        value={
-                                            datosCliente.nombre
-                                        }
-                                        onChange={
-                                            handleDatosCliente
-                                        }
+                                        value={datosCliente.nombre}
+                                        onChange={handleDatosCliente}
                                         className="border p-3 rounded"
                                     />
 
@@ -579,12 +538,8 @@ console.log("BODY QUE SE ENVIA:", body);
                                         name="telefono"
                                         placeholder="Teléfono *"
                                         required
-                                        value={
-                                            datosCliente.telefono
-                                        }
-                                        onChange={
-                                            handleDatosCliente
-                                        }
+                                        value={datosCliente.telefono}
+                                        onChange={handleDatosCliente}
                                         className="border p-3 rounded"
                                     />
 
@@ -593,12 +548,8 @@ console.log("BODY QUE SE ENVIA:", body);
                                         name="calle"
                                         placeholder="Calle *"
                                         required
-                                        value={
-                                            datosCliente.calle
-                                        }
-                                        onChange={
-                                            handleDatosCliente
-                                        }
+                                        value={datosCliente.calle}
+                                        onChange={handleDatosCliente}
                                         className="border p-3 rounded"
                                     />
 
@@ -607,12 +558,8 @@ console.log("BODY QUE SE ENVIA:", body);
                                         name="numeroCasa"
                                         placeholder="Número de casa *"
                                         required
-                                        value={
-                                            datosCliente.numeroCasa
-                                        }
-                                        onChange={
-                                            handleDatosCliente
-                                        }
+                                        value={datosCliente.numeroCasa}
+                                        onChange={handleDatosCliente}
                                         className="border p-3 rounded"
                                     />
 
@@ -620,25 +567,12 @@ console.log("BODY QUE SE ENVIA:", body);
                                         type="text"
                                         name="referencia"
                                         placeholder="Referencia"
-                                        value={
-                                            datosCliente.referencia
-                                        }
-                                        onChange={
-                                            handleDatosCliente
-                                        }
-                                        className="
-                                            border
-                                            p-3
-                                            rounded
-                                            md:col-span-2
-                                        "
+                                        value={datosCliente.referencia}
+                                        onChange={handleDatosCliente}
+                                        className="border p-3 rounded md:col-span-2"
                                     />
-
                                 </div>
-
                             ) : (
-
-                                /* USUARIO LOGUEADO */
                                 <div>
                                     <label className="block font-semibold mb-2">
                                         Dirección
@@ -650,9 +584,7 @@ console.log("BODY QUE SE ENVIA:", body);
                                         onChange={handlePedido}
                                         className="w-full border p-3 rounded"
                                     >
-                                        <option value="">
-                                            Seleccionar dirección
-                                        </option>
+                                        <option value="">Seleccionar dirección</option>
 
                                         {direcciones.map((direccion) => (
                                             <option
@@ -666,7 +598,9 @@ console.log("BODY QUE SE ENVIA:", body);
 
                                     <button
                                         type="button"
-                                        onClick={() => setMostrarNuevaDireccion(!mostrarNuevaDireccion)}
+                                        onClick={() =>
+                                            setMostrarNuevaDireccion(!mostrarNuevaDireccion)
+                                        }
                                         className="mt-3 text-green-700 font-semibold"
                                     >
                                         + Agregar nueva dirección
@@ -674,7 +608,6 @@ console.log("BODY QUE SE ENVIA:", body);
 
                                     {mostrarNuevaDireccion && (
                                         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded-xl border">
-
                                             <input
                                                 type="text"
                                                 name="alias"
@@ -721,37 +654,23 @@ console.log("BODY QUE SE ENVIA:", body);
                                         </div>
                                     )}
                                 </div>
-
                             )}
 
-                            {/* TOTAL */}
                             <div className="mt-10 flex justify-between items-center">
-
                                 <h2 className="text-3xl font-bold">
                                     Total: ${total}
                                 </h2>
 
                                 <button
                                     type="submit"
-                                    className="
-                                        bg-green-600
-                                        hover:bg-green-700
-                                        text-white
-                                        px-6
-                                        py-3
-                                        rounded-xl
-                                        font-bold
-                                    "
+                                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-bold"
                                 >
                                     Confirmar Pedido
                                 </button>
-
                             </div>
-
                         </form>
                     </>
                 )}
-
             </main>
         </div>
     );

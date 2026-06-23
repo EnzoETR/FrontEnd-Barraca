@@ -18,6 +18,8 @@ function MisPedidos() {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 8;
 
+    const [imagenes, setImagenes] = useState([]);
+
     useEffect(() => {
 
         if (!usuario) {
@@ -77,6 +79,25 @@ function MisPedidos() {
         }
     };
 
+    const obtenerImagenPorPresentacion = async (idPresentacion) => {
+        try {
+            const response = await apiFetch(
+                `/api/v1/imagenProducto/presentacion/${idPresentacion}`
+            );
+
+            if (!response.ok) {
+                return null;
+            }
+
+            const data = await response.json();
+            return data;
+
+        } catch (error) {
+            console.error("Error al obtener imagen por presentación:", error);
+            return null;
+        }
+    };
+
     const abrirModal = (pedido) => {
         setPedidoSeleccionado(pedido);
         setModalAbierto(true);
@@ -119,6 +140,62 @@ function MisPedidos() {
             default:
                 return "bg-gray-400 text-black";
         }
+    };
+
+    const rehacerPedido = async (pedido) => {
+        const nuevoCarrito = [];
+
+        for (const detalle of pedido.detalles || []) {
+            const idPresentacion = detalle.idPresentacion;
+
+            const cantidadDetalle = Number(detalle.cantidad);
+            const subtotalDetalle = Number(detalle.subtotal);
+            const precioUnitario = subtotalDetalle / cantidadDetalle;
+
+            const imagenProducto = await obtenerImagenPorPresentacion(idPresentacion);
+
+            const itemExistente = nuevoCarrito.find(
+                (item) => Number(item.idPresentacion) === Number(idPresentacion)
+            );
+
+            if (itemExistente) {
+                itemExistente.cantidad += cantidadDetalle;
+                itemExistente.subtotal += subtotalDetalle;
+
+                if (detalle.tipoUso) {
+                    itemExistente.detallesUso.push({
+                        tipoUso: detalle.tipoUso,
+                        cantidad: cantidadDetalle
+                    });
+                }
+            } else {
+                nuevoCarrito.push({
+                    idPresentacion: idPresentacion,
+
+                    descripcion: `${detalle.nombrePresentacion}`,
+
+                    precio: precioUnitario,
+                    cantidad: cantidadDetalle,
+                    subtotal: subtotalDetalle,
+
+
+                    imagenProducto: imagenProducto?.imagen,
+
+                    detallesUso: detalle.tipoUso
+                        ? [
+                            {
+                                tipoUso: detalle.tipoUso,
+                                cantidad: cantidadDetalle
+                            }
+                        ]
+                        : []
+                });
+            }
+        }
+
+        localStorage.setItem("carrito", JSON.stringify(nuevoCarrito));
+
+        cerrarModal();
     };
 
     const formatearEstado = (estado) => {
@@ -250,10 +327,6 @@ function MisPedidos() {
                                     <div className="p-4 flex-1 flex flex-col justify-between">
 
                                         <div>
-
-                                            <h2 className="text-xl font-bold text-gray-800 mb-2">
-                                                Pedido #{pedido.idPedido}
-                                            </h2>
 
                                             <p className="text-gray-600 text-sm mb-1">
                                                 <span className="font-semibold">
@@ -429,11 +502,6 @@ function MisPedidos() {
                             <div className="flex justify-between items-start">
 
                                 <div>
-
-                                    <h2 className="text-3xl font-bold mb-2">
-                                        Pedido #{pedidoSeleccionado.idPedido}
-                                    </h2>
-
                                     <p className="text-gray-300">
                                         Cliente: {pedidoSeleccionado.nombreCliente}
                                     </p>
@@ -569,6 +637,24 @@ function MisPedidos() {
                         </div>
 
                         <div className="p-4 bg-gray-100 rounded-b-lg flex justify-end">
+
+
+                           <button
+                                onClick={() => rehacerPedido(pedidoSeleccionado)}
+                                className="
+                                    bg-green-500
+                                    hover:bg-green-600
+                                    text-white
+                                    font-semibold
+                                    py-2
+                                    px-6
+                                    rounded-lg
+                                    mr-3
+                                "
+                            >
+
+                                Rehacer pedido
+                            </button>
 
                             <button
                                 onClick={cerrarModal}

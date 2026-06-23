@@ -347,7 +347,7 @@ function AdminPresentaciones() {
                     tableStyle={{ minWidth: "60rem" }}
                     paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
                 >
-                    <Column field="id" header="#" sortable style={{ width: "70px" }} />
+
                     <Column field="descripcion" header="Descripción" sortable />
                     <Column field="cantidad" header="Cantidad" sortable />
                     <Column field="unidadMedida" header="Unidad" sortable />

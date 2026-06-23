@@ -268,14 +268,13 @@ function AdminPedidos() {
                             <div className="p-4 flex-1 flex flex-col justify-between">
 
                                 <div>
-
-                                    <h2 className="text-xl font-bold text-gray-800 mb-2">
-                                        Pedido #{pedido.idPedido}
-                                    </h2>
-
                                     <p className="text-gray-600 text-sm mb-1">
-                                        <span className="font-semibold">Teléfono:</span>{" "}
-                                        {pedido.telefonoCliente || "No disponible"}
+                                        <span className="font-semibold">Cliente:</span>{" "}
+                                        {pedido.nombreCliente || "No disponible"}
+                                    </p>
+                                    <p className="text-gray-600 text-sm mb-1">
+                                        <span className="font-semibold">Fecha:</span>{" "}
+                                        {pedido.fechaEntrega || "No disponible"}
                                     </p>
 
                                     <p className="text-2xl font-bold text-green-600 mb-2">
@@ -423,10 +422,6 @@ function AdminPedidos() {
                             <div className="flex justify-between items-start">
 
                                 <div>
-
-                                    <h2 className="text-3xl font-bold mb-2">
-                                        Pedido #{pedidoSeleccionado.idPedido}
-                                    </h2>
 
                                     <p className="text-gray-300">
                                         Cliente: {pedidoSeleccionado.nombreCliente}

@@ -22,7 +22,7 @@ function AdminProductos() {
     const [nuevoProducto, setNuevoProducto] = useState({
         nombre: "",
         descripcion: "",
-        tipoUso: "",
+        usaTipoUso: false,
         activo: true
     });
 
@@ -57,7 +57,7 @@ function AdminProductos() {
             setNuevoProducto({
                 nombre: "",
                 descripcion: "",
-                tipoUso: "",
+                usaTipoUso: false,
                 activo: true
             });
 
@@ -183,14 +183,18 @@ function AdminProductos() {
                         }
                     />
 
-                    <InputText
+                    <Dropdown
                         className="input-crear-producto"
-                        placeholder="Tipo de uso"
-                        value={nuevoProducto.tipoUso}
+                        placeholder="¿Usa tipo de uso?"
+                        value={nuevoProducto.usaTipoUso}
+                        options={[
+                            { label: "No", value: false },
+                            { label: "Sí", value: true }
+                        ]}
                         onChange={(e) =>
                             setNuevoProducto({
                                 ...nuevoProducto,
-                                tipoUso: e.target.value
+                                usaTipoUso: e.value
                             })
                         }
                     />
@@ -238,10 +242,21 @@ function AdminProductos() {
                     tableStyle={{ minWidth: "60rem" }}
                     paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
                 >
-                    <Column field="id" header="#" sortable style={{ width: "70px" }} />
+
                     <Column field="nombre" header="Nombre" sortable />
                     <Column field="descripcion" header="Descripción" sortable />
-                    <Column field="tipoUso" header="Tipo de uso" sortable />
+                    <Column
+                        field="usaTipoUso"
+                        header="Tipo de uso"
+                        body={(producto) =>
+                            producto.usaTipoUso ? (
+                                <Tag value="Sí" severity="info" />
+                            ) : (
+                                <Tag value="No" severity="secondary" />
+                            )
+                        }
+                        sortable
+                    />
                     <Column
                         field="activo"
                         header="Estado"
@@ -313,14 +328,18 @@ function AdminProductos() {
                         </div>
 
                         <div className="campo-editar">
-                            <label>Tipo de uso</label>
-                            <InputText
-                                className="input-editar"
-                                value={productoEditando.tipoUso}
+                            <label>¿Usa tipo de uso?</label>
+                            <Dropdown
+                                className="dropdown-editar"
+                                value={productoEditando.usaTipoUso}
+                                options={[
+                                    { label: "No", value: false },
+                                    { label: "Sí", value: true }
+                                ]}
                                 onChange={(e) =>
                                     setProductoEditando({
                                         ...productoEditando,
-                                        tipoUso: e.target.value
+                                        usaTipoUso: e.value
                                     })
                                 }
                             />
