@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "../services/apiClient";
 import { useAuth } from "../context/AuthContext";
+import {redirect, useLocation, useNavigate} from "react-router-dom";
 
 function MisPedidos() {
 
     const { usuario } = useAuth();
+
+    const location = useLocation();
+    const navigate = useNavigate();
 
     const [pedidos, setPedidos] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -32,6 +36,26 @@ function MisPedidos() {
         obtenerEstados();
 
     }, [usuario]);
+
+    useEffect(() => {
+        const idPedidoNotificacion = location.state?.idPedido;
+
+        if (!idPedidoNotificacion || pedidos.length === 0) {
+            return;
+        }
+
+        const pedidoEncontrado = pedidos.find(
+            (pedido) => Number(pedido.idPedido) === Number(idPedidoNotificacion)
+        );
+
+        if (pedidoEncontrado) {
+            abrirModal(pedidoEncontrado);
+
+            navigate("/mispedidos", {
+                replace: true
+            });
+        }
+    }, [pedidos, location.state, navigate]);
 
     const obtenerPedidos = async () => {
 
@@ -196,6 +220,7 @@ function MisPedidos() {
         localStorage.setItem("carrito", JSON.stringify(nuevoCarrito));
 
         cerrarModal();
+        navigate("/carrito")
     };
 
     const formatearEstado = (estado) => {
