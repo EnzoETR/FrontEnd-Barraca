@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "../services/apiClient";
+import {FaWhatsapp} from "react-icons/fa";
 
 function AdminPedidos() {
 
@@ -180,6 +181,23 @@ function AdminPedidos() {
         }
     };
 
+    const formatearTelefonoWhatsApp = (telefono) => {
+        if (!telefono) return "";
+
+        let numero = telefono.replace(/\D/g, "");
+
+        if (numero.startsWith("0")) {
+            numero = "598" + numero.substring(1);
+        }
+
+        if (!numero.startsWith("598")) {
+            numero = "598" + numero;
+        }
+
+        return numero;
+    };
+
+
     if (loading) {
 
         return (
@@ -322,8 +340,6 @@ function AdminPedidos() {
                     ))}
 
                 </div>
-
-                {/* PAGINACIÓN */}
                 {totalPages > 1 && (
                     <div className="flex justify-center items-center gap-2 mt-6">
 
@@ -386,7 +402,7 @@ function AdminPedidos() {
 
             </div>
 
-            {/* MODAL */}
+
             {modalAbierto && pedidoSeleccionado && (
 
                 <div
@@ -636,7 +652,21 @@ function AdminPedidos() {
 
                         </div>
 
-                        <div className="p-4 bg-gray-100 rounded-b-lg flex justify-end">
+                        <div className="p-4 bg-gray-100 rounded-b-lg flex justify-end items-center gap-3">
+
+
+                            <a
+                                href={`https://api.whatsapp.com/send?phone=${formatearTelefonoWhatsApp(pedidoSeleccionado.telefonoCliente)}&text=${encodeURIComponent(
+                                    `Hola, tu pedido fue actualizado a: ${formatearEstado(pedidoSeleccionado.estado)}`
+                                )}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-center gap-3 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-5 rounded-lg transition"
+                            >
+                                <FaWhatsapp size={24} />
+                                Notificar por WhatsApp
+                            </a>
+
 
                             <button
                                 onClick={cerrarModal}
@@ -645,9 +675,10 @@ function AdminPedidos() {
                                     hover:bg-gray-600
                                     text-white
                                     font-semibold
-                                    py-2
+                                    py-3
                                     px-6
                                     rounded-lg
+                                    transition
                                 "
                             >
                                 Cerrar
