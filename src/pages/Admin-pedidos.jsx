@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { Toast } from "primereact/toast";
 import { apiFetch } from "../services/apiClient";
 
 function AdminPedidos() {
+    const toast = useRef(null);
 
     const [pedidos, setPedidos] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -72,7 +74,12 @@ function AdminPedidos() {
 
             if (!idEstado) {
 
-                alert("Selecciona un estado");
+                toast.current.show({
+                    severity: "warn",
+                    summary: "Estado requerido",
+                    detail: "Selecciona un estado.",
+                    life: 3000
+                });
 
                 return;
             }
@@ -118,12 +125,22 @@ function AdminPedidos() {
                 [idPedido]: ""
             });
 
-            alert("Estado actualizado correctamente");
+            toast.current.show({
+                severity: "success",
+                summary: "Estado actualizado",
+                detail: "El estado del pedido se actualizó correctamente.",
+                life: 3000
+            });
 
         } catch (error) {
 
             console.error(error);
-            alert("Error al actualizar estado");
+            toast.current.show({
+                severity: "error",
+                summary: "Error",
+                detail: "No se pudo actualizar el estado.",
+                life: 3000
+            });
         }
     };
 
@@ -170,11 +187,13 @@ function AdminPedidos() {
             case "en_espera":
                 return "En espera";
             case "en_preparacion":
-                return "En preparacion";
+                return "En preparación";
             case "entregado":
                 return "Entregado";
             case "rechazado":
                 return "Rechazado";
+            case "en_viaje":
+                return "En viaje";
             default:
                 return estado;
         }
@@ -192,6 +211,7 @@ function AdminPedidos() {
     return (
 
         <div className="min-h-screen">
+            <Toast ref={toast} />
 
             <div className="max-w-7xl mx-auto px-4 py-8">
 

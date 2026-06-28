@@ -167,3 +167,16 @@
     background: #1d4ed8 !important;
     transform: translateY(-1px);
 }
+
+
+.p-confirm-dialog .p-dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.p-confirm-dialog .p-dialog-footer button {
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+}

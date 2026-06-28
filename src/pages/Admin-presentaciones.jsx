@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { Toast } from "primereact/toast";
 import { apiFetch } from "../services/apiClient";
+import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
@@ -14,6 +16,7 @@ import "./Admin.css";
 const SUGERENCIAS_DESCRIPCION = ["Tarrina", "Bolsa", "Camion", "Camioneta"];
 
 function AdminPresentaciones() {
+    const toast = useRef(null);
     const [presentaciones, setPresentaciones] = useState([]);
     const [productos, setProductos] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -103,7 +106,12 @@ function AdminPresentaciones() {
                 throw new Error("Error al crear presentación");
             }
 
-            alert("Presentación creada correctamente");
+            toast.current.show({
+                severity: "success",
+                summary: "Presentación creada",
+                detail: "La presentación se creó correctamente.",
+                life: 3000
+            });
 
             setNuevaPresentacion({
                 descripcion: "",
@@ -116,7 +124,12 @@ function AdminPresentaciones() {
            await cargarDatos();
         } catch (error) {
             console.error(error);
-            alert("Error al crear presentación");
+            toast.current.show({
+                severity: "error",
+                summary: "Error",
+                detail: "No se pudo crear la presentación.",
+                life: 3000
+            });
         }
     };
 
@@ -147,36 +160,69 @@ function AdminPresentaciones() {
                 )
             );
 
-            alert("Presentación actualizada");
+            toast.current.show({
+                severity: "success",
+                summary: "Presentación actualizada",
+                detail: "Los cambios se guardaron correctamente.",
+                life: 3000
+            });
             setDialogVisible(false);
             setPresentacionEditando(null);
 
         } catch (error) {
             console.error(error);
-            alert(error.message);
+            toast.current.show({
+                severity: "error",
+                summary: "Error",
+                detail: error.message,
+                life: 3000
+            });
         }
     };
 
-    const eliminarPresentacion = async (idPresentacion) => {
-        const confirmar = confirm("¿Seguro que deseas eliminar esta presentación?");
-        if (!confirmar) return;
+    const eliminarPresentacion = (idPresentacion) => {
+        confirmDialog({
+            header: "Eliminar presentación",
+            message: "¿Está seguro de que desea eliminar esta presentación?",
+            icon: "pi pi-exclamation-triangle",
+            acceptLabel: "Eliminar",
+                rejectLabel: "Cancelar",
 
-        try {
-            const response = await apiFetch(
-                `/api/v1/presentacion/eliminarPresentacion/${idPresentacion}`,
-                { method: "DELETE" }
-            );
+                acceptClassName: "p-button-danger",
+                rejectClassName: "p-button-secondary p-button-outlined",
 
-            if (!response.ok) {
-                throw new Error("Error al eliminar presentación");
+            accept: async () => {
+                try {
+                    const response = await apiFetch(
+                        `/api/v1/presentacion/eliminarPresentacion/${idPresentacion}`,
+                        { method: "DELETE" }
+                    );
+
+                    if (!response.ok) {
+                        throw new Error("Error al eliminar presentación");
+                    }
+
+                    toast.current.show({
+                        severity: "success",
+                        summary: "Presentación eliminada",
+                        detail: "La presentación se eliminó correctamente.",
+                        life: 3000
+                    });
+
+                    await cargarDatos();
+
+                } catch (error) {
+                    console.error(error);
+
+                    toast.current.show({
+                        severity: "error",
+                        summary: "Error",
+                        detail: "No se pudo eliminar la presentación.",
+                        life: 3000
+                    });
+                }
             }
-
-            alert("Presentación eliminada");
-           await cargarDatos();
-        } catch (error) {
-            console.error(error);
-            alert("Error al eliminar presentación");
-        }
+        });
     };
 
     const productoTemplate = (presentacion) => {
@@ -219,6 +265,9 @@ function AdminPresentaciones() {
     };
 
     return (
+        <>
+        <Toast ref={toast} />
+        <ConfirmDialog />
         <div className="max-w-7xl mx-auto p-6">
             <div className="flex justify-between items-center mb-8">
                 <h1 className="text-4xl font-bold text-gray-800">
@@ -465,6 +514,7 @@ function AdminPresentaciones() {
                 )}
             </Dialog>
         </div>
+        </>
     );
 }
 

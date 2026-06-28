@@ -1,10 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { Toast } from "primereact/toast";
 import FichaCarrito from "../components/FichaCarrito";
 import { apiFetch } from "../services/apiClient";
 import { useAuth } from "../context/AuthContext";
+import GoogleAddressAutocomplete from "../components/GoogleAddressAutocomplete";
 
 export default function Carrito() {
     const { usuario } = useAuth();
+    const toast = useRef(null);
 
     const [carrito, setCarrito] = useState(() => {
         return JSON.parse(localStorage.getItem("carrito")) || [];
@@ -18,7 +21,8 @@ export default function Carrito() {
         telefono: "",
         calle: "",
         numeroCasa: "",
-        referencia: ""
+        referencia: "",
+        direccionCompleta: ""
     });
 
     const [nuevaDireccion, setNuevaDireccion] = useState({
@@ -34,6 +38,8 @@ export default function Carrito() {
         idDireccion: "",
         idEstado: 1
     });
+
+const [numeroAutomatico, setNumeroAutomatico] = useState(false);
 
     const actualizarCarrito = (nuevoCarrito) => {
         setCarrito(nuevoCarrito);
@@ -86,7 +92,7 @@ export default function Carrito() {
                                 }))
                                 : [
                                     {
-                                        tipoUso: "",
+                                        tipoUso: "Estufa",
                                         cantidad: minimo
                                     }
                                 ]
@@ -146,7 +152,9 @@ export default function Carrito() {
                 const nuevosDetallesUso = [
                     ...item.detallesUso,
                     {
-                        tipoUso: "",
+                         tipoUso: tiposUso.find(
+                                (tipo) => !item.detallesUso.some((detalle) => detalle.tipoUso === tipo)
+                            ),
                         cantidad: item.unidadMedida === "kg" ? 50 : 1
                     }
                 ];
@@ -282,7 +290,12 @@ export default function Carrito() {
     const agregarDireccion = async () => {
         try {
             if (!nuevaDireccion.calle || !nuevaDireccion.numeroCasa || !nuevaDireccion.alias) {
-                alert("Complete alias, calle y número de casa");
+                toast.current.show({
+                    severity: "warn",
+                    summary: "Datos incompletos",
+                    detail: "Complete alias, calle y número de casa.",
+                    life: 3000
+                });
                 return;
             }
 
@@ -321,11 +334,21 @@ export default function Carrito() {
 
             setMostrarNuevaDireccion(false);
 
-            alert("Dirección agregada correctamente");
+            toast.current.show({
+                severity: "success",
+                summary: "Dirección agregada",
+                detail: "La dirección se guardó correctamente.",
+                life: 3000
+            });
 
         } catch (error) {
             console.error(error);
-            alert("Error al agregar dirección");
+            toast.current.show({
+                severity: "error",
+                summary: "Error",
+                detail: "No se pudo agregar la dirección.",
+                life: 3000
+            });
         }
     };
 
@@ -339,7 +362,12 @@ export default function Carrito() {
             );
 
             if (faltaTipoUso) {
-                alert("Seleccione el tipo de uso en todos los productos que lo requieren");
+                toast.current.show({
+                    severity: "warn",
+                    summary: "Tipo de uso",
+                    detail: "Seleccione el tipo de uso en todos los productos.",
+                    life: 3000
+                });
                 return;
             }
 
@@ -369,13 +397,23 @@ export default function Carrito() {
             };
 
             if (!pedido.horarioEntrega) {
-                alert("Seleccione un horario");
+                toast.current.show({
+                    severity: "warn",
+                    summary: "Horario",
+                    detail: "Seleccione un horario de entrega.",
+                    life: 3000
+                });
                 return;
             }
 
             if (usuario) {
                 if (!pedido.idDireccion) {
-                    alert("Seleccione una dirección");
+                    toast.current.show({
+                        severity: "warn",
+                        summary: "Dirección",
+                        detail: "Seleccione una dirección.",
+                        life: 3000
+                    });
                     return;
                 }
 
@@ -389,7 +427,12 @@ export default function Carrito() {
                 const { nombre, telefono, calle, numeroCasa } = datosCliente;
 
                 if (!nombre || !telefono || !calle || !numeroCasa) {
-                    alert("Complete nombre, teléfono, calle y número de casa");
+                    toast.current.show({
+                        severity: "warn",
+                        summary: "Datos incompletos",
+                        detail: "Complete todos los datos obligatorios.",
+                        life: 3000
+                    });
                     return;
                 }
 
@@ -430,14 +473,24 @@ export default function Carrito() {
 
             await response.json();
 
-            alert("Pedido creado correctamente");
+            toast.current.show({
+                severity: "success",
+                summary: "Pedido creado",
+                detail: "Su pedido fue creado correctamente.",
+                life: 3000
+            });
 
             localStorage.removeItem("carrito");
             setCarrito([]);
 
         } catch (error) {
             console.error(error);
-            alert("Error al crear pedido");
+            toast.current.show({
+                severity: "error",
+                summary: "Error",
+                detail: "No se pudo crear el pedido.",
+                life: 3000
+            });
         }
     };
 
@@ -456,6 +509,7 @@ export default function Carrito() {
 
     return (
         <div className="min-h-screen flex flex-col">
+            <Toast ref={toast} />
             <main className="flex-grow p-6 max-w-6xl mx-auto w-full">
                 <h1 className="text-3xl font-bold mb-6">
                     Carrito
@@ -543,24 +597,41 @@ export default function Carrito() {
                                         className="border p-3 rounded"
                                     />
 
-                                    <input
-                                        type="text"
-                                        name="calle"
-                                        placeholder="Calle *"
-                                        required
-                                        value={datosCliente.calle}
-                                        onChange={handleDatosCliente}
-                                        className="border p-3 rounded"
+                                    <GoogleAddressAutocomplete
+                                        onSelect={(direccion) => {
+                                            setNumeroAutomatico(direccion.tieneNumero);
+
+                                            setDatosCliente((prev) => ({
+                                                ...prev,
+                                                calle: direccion.calle,
+                                                numeroCasa: direccion.numero,
+                                                direccionCompleta: direccion.direccionCompleta
+                                            }));
+                                        }}
                                     />
+                                    {datosCliente.direccionCompleta && (
+                                        <p className="text-sm text-gray-600 -mt-2">
+                                            Dirección seleccionada: {datosCliente.direccionCompleta}
+                                        </p>
+                                    )}
 
                                     <input
                                         type="text"
                                         name="numeroCasa"
-                                        placeholder="Número de casa *"
+                                        placeholder={
+                                            numeroAutomatico
+                                                ? "Número detectado"
+                                                : "Ingrese el número de casa"
+                                        }
                                         required
                                         value={datosCliente.numeroCasa}
                                         onChange={handleDatosCliente}
-                                        className="border p-3 rounded"
+                                        readOnly={numeroAutomatico}
+                                        className={`border p-3 rounded ${
+                                            numeroAutomatico
+                                                ? "bg-gray-100 cursor-not-allowed"
+                                                : ""
+                                        }`}
                                     />
 
                                     <input
@@ -617,22 +688,28 @@ export default function Carrito() {
                                                 className="border p-3 rounded"
                                             />
 
-                                            <input
-                                                type="text"
-                                                name="calle"
-                                                placeholder="Calle"
-                                                value={nuevaDireccion.calle}
-                                                onChange={handleNuevaDireccion}
-                                                className="border p-3 rounded"
+                                            <GoogleAddressAutocomplete
+                                                onSelect={(direccion) => {
+                                                    setNuevaDireccion((prev) => ({
+                                                        ...prev,
+                                                        calle: direccion.calle,
+                                                        numeroCasa: direccion.numero
+                                                    }));
+                                                }}
                                             />
 
                                             <input
-                                                type="number"
+                                                type="text"
                                                 name="numeroCasa"
                                                 placeholder="Número de casa"
                                                 value={nuevaDireccion.numeroCasa}
                                                 onChange={handleNuevaDireccion}
-                                                className="border p-3 rounded"
+                                                readOnly={!!nuevaDireccion.numeroCasa}
+                                                className={`border p-3 rounded ${
+                                                    nuevaDireccion.numeroCasa
+                                                        ? "bg-gray-100 cursor-not-allowed"
+                                                        : ""
+                                                }`}
                                             />
 
                                             <input

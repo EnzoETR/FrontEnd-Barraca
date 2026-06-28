@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { Toast } from "primereact/toast";
 import { apiFetch } from "../services/apiClient";
+import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
@@ -12,6 +14,7 @@ import { Dropdown } from "primereact/dropdown";
 import "./Admin.css";
 
 function AdminProductos() {
+    const toast = useRef(null);
     const [productos, setProductos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [globalFilter, setGlobalFilter] = useState("");
@@ -52,7 +55,12 @@ function AdminProductos() {
 
             if (!response.ok) throw new Error("Error al crear producto");
 
-            alert("Producto creado correctamente");
+            toast.current.show({
+                severity: "success",
+                summary: "Producto creado",
+                detail: "El producto se creó correctamente.",
+                life: 3000
+            });
 
             setNuevoProducto({
                 nombre: "",
@@ -64,7 +72,12 @@ function AdminProductos() {
             obtenerProductos();
         } catch (error) {
             console.error(error);
-            alert("Error al crear producto");
+            toast.current.show({
+                severity: "error",
+                summary: "Error",
+                detail: "No se pudo crear el producto.",
+                life: 3000
+            });
         }
     };
 
@@ -81,33 +94,68 @@ function AdminProductos() {
 
             if (!response.ok) throw new Error("Error al actualizar producto");
 
-            alert("Producto actualizado");
+            toast.current.show({
+                severity: "success",
+                summary: "Producto actualizado",
+                detail: "Los cambios se guardaron correctamente.",
+                life: 3000
+            });
             setDialogVisible(false);
             obtenerProductos();
         } catch (error) {
             console.error(error);
-            alert(error.message);
+            toast.current.show({
+                severity: "error",
+                summary: "Error",
+                detail: error.message,
+                life: 3000
+            });
         }
     };
 
-    const eliminarProducto = async (idProducto) => {
-        const confirmar = confirm("¿Seguro que deseas eliminar este producto?");
-        if (!confirmar) return;
+    const eliminarProducto = (idProducto) => {
+        confirmDialog({
+            header: "Eliminar producto",
+            message: "¿Está seguro de que desea eliminar este producto?",
+            icon: "pi pi-exclamation-triangle",
+            acceptLabel: "Eliminar",
+                            rejectLabel: "Cancelar",
 
-        try {
-            const response = await apiFetch(
-                `/api/v1/producto/eliminarProducto/${idProducto}`,
-                { method: "DELETE" }
-            );
+                            acceptClassName: "p-button-danger",
+                            rejectClassName: "p-button-secondary p-button-outlined",
 
-            if (!response.ok) throw new Error("Error al eliminar producto");
+            accept: async () => {
+                try {
+                    const response = await apiFetch(
+                        `/api/v1/producto/eliminarProducto/${idProducto}`,
+                        { method: "DELETE" }
+                    );
 
-            alert("Producto eliminado");
-            obtenerProductos();
-        } catch (error) {
-            console.error(error);
-            alert("Error al eliminar");
-        }
+                    if (!response.ok) {
+                        throw new Error("Error al eliminar producto");
+                    }
+
+                    toast.current.show({
+                        severity: "success",
+                        summary: "Producto eliminado",
+                        detail: "El producto se eliminó correctamente.",
+                        life: 3000
+                    });
+
+                    obtenerProductos();
+
+                } catch (error) {
+                    console.error(error);
+
+                    toast.current.show({
+                        severity: "error",
+                        summary: "Error",
+                        detail: "No se pudo eliminar el producto.",
+                        life: 3000
+                    });
+                }
+            }
+        });
     };
 
     const estadoTemplate = (producto) => {
@@ -142,6 +190,9 @@ function AdminProductos() {
     };
 
     return (
+        <>
+        <Toast ref={toast} />
+        <ConfirmDialog />
         <div className="max-w-7xl mx-auto p-6">
             <div className="flex justify-between items-center mb-8">
                 <h1 className="text-4xl font-bold text-gray-800">
@@ -366,6 +417,7 @@ function AdminProductos() {
                 )}
             </Dialog>
         </div>
+        </>
     );
 }
 

@@ -49,7 +49,7 @@ export default function FormRegistro() {
         throw new Error(data.mensaje || "No se pudo registrar el usuario");
       }
 
-      const datos = await login(telefono, contrasena);
+
       navigate(rutaPorRol(datos.roles), { replace: true });
     } catch (err) {
       setError(err.message);

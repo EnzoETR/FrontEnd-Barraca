@@ -9,7 +9,7 @@ export default function FichaCarrito({
     eliminarProducto,
     cambiarCantidadSimple
 }) {
-    const tiposUso = ["estufa", "parrilla", "calefactor", "quematuti"];
+    const tiposUso = ["Estufa", "Parrilla", "Calefactor", "Quematuti"];
 
     const detallesUso = item.detallesUso || [];
     const cantidadMinima = item.unidadMedida === "kg" ? 50 : 1;
@@ -75,7 +75,7 @@ export default function FichaCarrito({
                             {detallesUso.map((detalle, index) => (
                                 <div
                                     key={index}
-                                    className="grid grid-cols-[100px_70px_30px] gap-2 items-center"
+                                    className="grid grid-cols-[115px_40px_30px] gap-2 items-center justify-center"
                                 >
                                     <select
                                         value={detalle.tipoUso}
@@ -105,7 +105,7 @@ export default function FichaCarrito({
                                         "
                                     >
                                         <option value="">
-                                            tipo de uso
+                                            Tipo de uso
                                         </option>
 
                                         {opcionesDisponibles(index).map((tipo) => (
@@ -159,21 +159,22 @@ export default function FichaCarrito({
                                 </div>
                             ))}
 
-                            <div className="flex justify-end">
-                                <Button
-                                    icon="pi pi-plus"
-                                    text
-                                    rounded
-                                    severity="warning"
-                                    disabled={!puedeAgregarDetalle}
-                                    onClick={() =>
-                                        agregarDetalleUso(item.idPresentacion)
-                                    }
-                                />
-                            </div>
+                            {puedeAgregarDetalle && (
+                                <div className="flex justify-end">
+                                    <Button
+                                        icon="pi pi-plus"
+                                        text
+                                        rounded
+                                        severity="warning"
+                                        onClick={() =>
+                                            agregarDetalleUso(item.idPresentacion)
+                                        }
+                                    />
+                                </div>
+                            )}
                         </>
                     ) : (
-                        <div className="flex items-center gap-2 h-[40px]">
+                        <div className="flex items-center justify-center gap-2 h-[40px]">
                             <input
                                 type="number"
                                 min={cantidadMinima}
