@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Toast } from "primereact/toast";
 import { apiFetch } from "../services/apiClient";
+import {FaWhatsapp} from "react-icons/fa";
 
 function AdminPedidos() {
     const toast = useRef(null);
@@ -168,7 +169,8 @@ function AdminPedidos() {
     const totalPages = Math.ceil(pedidosFiltrados.length / itemsPerPage);
 
     const getStatusColor = (estado) => {
-        switch (estado) {
+        const estadoNormalizado = estado?.toString().trim().toLowerCase();
+        switch (estadoNormalizado) {
             case "en_espera":
                 return "bg-yellow-400 text-black";
             case "en_preparacion":
@@ -177,13 +179,16 @@ function AdminPedidos() {
                 return "bg-green-400 text-black";
             case "rechazado":
                 return "bg-red-400 text-black";
+            case "en_viaje":
+                return "bg-purple-400 text-black";
             default:
                 return "bg-gray-400 text-black";
         }
     };
 
     const formatearEstado = (estado) => {
-        switch (estado) {
+        const estadoNormalizado = estado?.toString().trim().toLowerCase();
+        switch (estadoNormalizado) {
             case "en_espera":
                 return "En espera";
             case "en_preparacion":
@@ -198,6 +203,23 @@ function AdminPedidos() {
                 return estado;
         }
     };
+
+    const formatearTelefonoWhatsApp = (telefono) => {
+        if (!telefono) return "";
+
+        let numero = telefono.replace(/\D/g, "");
+
+        if (numero.startsWith("0")) {
+            numero = "598" + numero.substring(1);
+        }
+
+        if (!numero.startsWith("598")) {
+            numero = "598" + numero;
+        }
+
+        return numero;
+    };
+
 
     if (loading) {
 
@@ -342,8 +364,6 @@ function AdminPedidos() {
                     ))}
 
                 </div>
-
-                {/* PAGINACIÓN */}
                 {totalPages > 1 && (
                     <div className="flex justify-center items-center gap-2 mt-6">
 
@@ -406,7 +426,7 @@ function AdminPedidos() {
 
             </div>
 
-            {/* MODAL */}
+
             {modalAbierto && pedidoSeleccionado && (
 
                 <div
@@ -656,7 +676,21 @@ function AdminPedidos() {
 
                         </div>
 
-                        <div className="p-4 bg-gray-100 rounded-b-lg flex justify-end">
+                        <div className="p-4 bg-gray-100 rounded-b-lg flex justify-end items-center gap-3">
+
+
+                            <a
+                                href={`https://api.whatsapp.com/send?phone=${formatearTelefonoWhatsApp(pedidoSeleccionado.telefonoCliente)}&text=${encodeURIComponent(
+                                    `Hola, tu pedido fue actualizado a: ${formatearEstado(pedidoSeleccionado.estado)}`
+                                )}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-center gap-3 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-5 rounded-lg transition"
+                            >
+                                <FaWhatsapp size={24} />
+                                Notificar por WhatsApp
+                            </a>
+
 
                             <button
                                 onClick={cerrarModal}
@@ -665,9 +699,10 @@ function AdminPedidos() {
                                     hover:bg-gray-600
                                     text-white
                                     font-semibold
-                                    py-2
+                                    py-3
                                     px-6
                                     rounded-lg
+                                    transition
                                 "
                             >
                                 Cerrar

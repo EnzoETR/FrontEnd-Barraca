@@ -152,7 +152,8 @@ function MisPedidos() {
     );
 
     const getStatusColor = (estado) => {
-        switch (estado) {
+        const estadoNormalizado = estado?.toString().trim().toLowerCase();
+        switch (estadoNormalizado) {
             case "en_espera":
                 return "bg-yellow-400 text-black";
             case "en_proceso":
@@ -161,6 +162,8 @@ function MisPedidos() {
                 return "bg-green-400 text-black";
             case "rechazado":
                 return "bg-red-400 text-black";
+            case "en_viaje":
+                return "bg-purple-400 text-black";
             default:
                 return "bg-gray-400 text-black";
         }
@@ -224,7 +227,8 @@ function MisPedidos() {
     };
 
     const formatearEstado = (estado) => {
-        switch (estado) {
+        const estadoNormalizado = estado?.toString().trim().toLowerCase();
+        switch (estadoNormalizado) {
             case "en_espera":
                 return "En espera";
             case "en_preparacion":
@@ -233,6 +237,8 @@ function MisPedidos() {
                 return "Entregado";
             case "rechazado":
                 return "Rechazado";
+            case "en_viaje":
+                return "En viaje";
             default:
                 return estado;
         }
