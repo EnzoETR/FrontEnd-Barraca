@@ -12,6 +12,8 @@ export default function Catalogo() {
     const [first, setFirst] = useState(0);
     const [rows, setRows] = useState(8);
     const [selectedItem, setSelectedItem] = useState("");
+    const [globalFilter, setGlobalFilter] = useState("");
+    const [filtroProducto, setFiltroProducto] = useState("");
 
     useEffect(() => {
         obtenerPresentaciones();
@@ -78,7 +80,31 @@ export default function Catalogo() {
         return prod ? prod.nombre : "Producto no encontrado";
     };
 
-    const presentacionesPaginadas = presentacion.slice(first, first + rows);
+    const presentacionesFiltradas = presentacion.filter((p) => {
+        const textoBusqueda = globalFilter.toLowerCase();
+
+        const nombreProducto = obtenerNombreProductoPresentacion(p).toLowerCase();
+        const descripcion = p.descripcion?.toLowerCase() || "";
+        const unidadMedida = p.unidadMedida?.toLowerCase() || "";
+
+        const coincideBusqueda =
+            descripcion.includes(textoBusqueda) ||
+            nombreProducto.includes(textoBusqueda) ||
+            unidadMedida.includes(textoBusqueda);
+
+        const coincideProducto =
+            !filtroProducto ||
+            Number(p.idProducto) === Number(filtroProducto);
+
+        return coincideBusqueda && coincideProducto;
+    });
+
+
+    const productosConPresentacion = producto.filter((prod) =>
+        presentacion.some((p) => Number(p.idProducto) === Number(prod.id))
+    );
+
+    const presentacionesPaginadas = presentacionesFiltradas.slice(first, first + rows);
 
     if (loading) {
         return <div className="p-10 text-xl">Cargando catálogo...</div>;
@@ -88,20 +114,43 @@ export default function Catalogo() {
         (p) => p.descripcion
     );
 
+
+
     return (
         <div className="min-h-screen flex flex-col">
             <main className="flex-grow p-6">
 
                 <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-6">
 
-                    <select className="border rounded-lg px-4 py-2">
-                        <option>Nombre</option>
-                        <option>Precio</option>
+                    <select
+                        className="border rounded-lg px-4 py-2"
+                        value={filtroProducto}
+                        onChange={(e) => {
+                            setFiltroProducto(e.target.value);
+                            setFirst(0);
+                        }}
+                    >
+                        <option value="">Todos los tipos</option>
+
+                        {productosConPresentacion.map((prod) => (
+                            <option key={prod.id} value={prod.id}>
+                                {prod.nombre}
+                            </option>
+                        ))}
                     </select>
 
-                   <form>
-                       <input className="border rounded-lg px-4 py-2 " type="text" placeholder="Leña de roble"/>
-                   </form>
+                    <form onSubmit={(e) => e.preventDefault()}>
+                        <input
+                            className="border rounded-lg px-4 py-2"
+                            type="text"
+                            placeholder="Buscar presentación..."
+                            value={globalFilter}
+                            onChange={(e) => {
+                                setGlobalFilter(e.target.value);
+                                setFirst(0);
+                            }}
+                        />
+                    </form>
 
                 </div>
 
@@ -130,7 +179,7 @@ export default function Catalogo() {
                         <Paginator
                             first={first}
                             rows={rows}
-                            totalRecords={presentacion.length}
+                            totalRecords={presentacionesFiltradas.length}
                             rowsPerPageOptions={[4, 8, 12, 16]}
                             onPageChange={(e) => {
                                 setFirst(e.first);
