@@ -1,5 +1,26 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "../services/apiClient";
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend,
+    ArcElement,
+} from 'chart.js';
+import { Bar, Pie, Line } from 'react-chartjs-2';
+
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend,
+    ArcElement
+);
 
 function AdminEstadisticas() {
 
@@ -145,7 +166,8 @@ function AdminEstadisticas() {
                                 <thead className="bg-gray-100">
                                     <tr>
                                         <th className="px-5 py-3">Mes</th>
-                                        <th className="px-5 py-3">Total vendido</th>
+                                        <th className="px-5 py-3">Total estimado</th>
+                                        <th className="px-5 py-3">Total entregado</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -155,7 +177,10 @@ function AdminEstadisticas() {
                                                 {formatearMes(venta.mes)}
                                             </td>
                                             <td className="px-5 py-3 font-semibold">
-                                                {formatearPrecio(venta.totalVentas)}
+                                                {formatearPrecio(venta.totalVentasEstimado)}
+                                            </td>
+                                            <td className="px-5 py-3 font-semibold text-green-600">
+                                                {formatearPrecio(venta.totalVentasEntregado)}
                                             </td>
                                         </tr>
                                     ))}
@@ -165,6 +190,61 @@ function AdminEstadisticas() {
                             <p className="p-5 text-gray-500">
                                 No hay datos de ventas mensuales.
                             </p>
+                        )}
+
+                        {ventasMensualesFiltradas?.length > 0 && (
+                            <div className="p-5 border-t border-gray-200">
+                                <h3 className="text-lg font-semibold text-gray-800 mb-4">Gráfico de ventas mensuales</h3>
+                                <div className="h-80">
+                                    <Bar
+                                        data={{
+                                            labels: ventasMensualesFiltradas.map(v => formatearMes(v.mes)),
+                                            datasets: [
+                                                {
+                                                    label: 'Total estimado',
+                                                    data: ventasMensualesFiltradas.map(v => v.totalVentasEstimado),
+                                                    backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                                                    borderColor: 'rgb(59, 130, 246)',
+                                                    borderWidth: 1,
+                                                },
+                                                {
+                                                    label: 'Total entregado',
+                                                    data: ventasMensualesFiltradas.map(v => v.totalVentasEntregado),
+                                                    backgroundColor: 'rgba(34, 197, 94, 0.5)',
+                                                    borderColor: 'rgb(34, 197, 94)',
+                                                    borderWidth: 1,
+                                                }
+                                            ]
+                                        }}
+                                        options={{
+                                            responsive: true,
+                                            maintainAspectRatio: false,
+                                            plugins: {
+                                                legend: {
+                                                    position: 'top',
+                                                },
+                                                tooltip: {
+                                                    callbacks: {
+                                                        label: function(context) {
+                                                            return context.dataset.label + ': $' + context.raw.toFixed(2);
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            scales: {
+                                                y: {
+                                                    beginAtZero: true,
+                                                    ticks: {
+                                                        callback: function(value) {
+                                                            return '$' + value;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }}
+                                    />
+                                </div>
+                            </div>
                         )}
                     </div>
                 )}
@@ -185,7 +265,7 @@ function AdminEstadisticas() {
                                 <thead className="bg-gray-100">
                                     <tr>
                                         <th className="px-5 py-3">Producto</th>
-                                        <th className="px-5 py-3">Cantidad vendida</th>
+                                        <th className="px-5 py-3">Kilos vendidos</th>
                                         <th className="px-5 py-3">Total vendido</th>
                                     </tr>
                                 </thead>
@@ -196,7 +276,7 @@ function AdminEstadisticas() {
                                                 {producto.nombreProducto}
                                             </td>
                                             <td className="px-5 py-3">
-                                                {producto.cantidadTotal}
+                                                {producto.kilosTotal?.toFixed(2)} kg
                                             </td>
                                             <td className="px-5 py-3 font-semibold">
                                                 {formatearPrecio(producto.totalVentas)}
@@ -209,6 +289,54 @@ function AdminEstadisticas() {
                             <p className="p-5 text-gray-500">
                                 No hay datos de productos vendidos.
                             </p>
+                        )}
+
+                        {estadisticas.productosMasVendidos?.length > 0 && (
+                            <div className="p-5 border-t border-gray-200">
+                                <h3 className="text-lg font-semibold text-gray-800 mb-4">Gráfico de productos más vendidos</h3>
+                                <div className="h-80">
+                                    <Bar
+                                        data={{
+                                            labels: estadisticas.productosMasVendidos.map(p => p.nombreProducto),
+                                            datasets: [
+                                                {
+                                                    label: 'Kilos vendidos',
+                                                    data: estadisticas.productosMasVendidos.map(p => p.kilosTotal),
+                                                    backgroundColor: 'rgba(168, 85, 247, 0.5)',
+                                                    borderColor: 'rgb(168, 85, 247)',
+                                                    borderWidth: 1,
+                                                }
+                                            ]
+                                        }}
+                                        options={{
+                                            responsive: true,
+                                            maintainAspectRatio: false,
+                                            plugins: {
+                                                legend: {
+                                                    display: false,
+                                                },
+                                                tooltip: {
+                                                    callbacks: {
+                                                        label: function(context) {
+                                                            return 'Kilos: ' + context.raw.toFixed(2) + ' kg';
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            scales: {
+                                                y: {
+                                                    beginAtZero: true,
+                                                    ticks: {
+                                                        callback: function(value) {
+                                                            return value + ' kg';
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }}
+                                    />
+                                </div>
+                            </div>
                         )}
                     </div>
                 )}
@@ -258,6 +386,54 @@ function AdminEstadisticas() {
                                 No hay datos de clientes.
                             </p>
                         )}
+
+                        {estadisticas.clientesTop?.length > 0 && (
+                            <div className="p-5 border-t border-gray-200">
+                                <h3 className="text-lg font-semibold text-gray-800 mb-4">Gráfico de clientes top</h3>
+                                <div className="h-80">
+                                    <Bar
+                                        data={{
+                                            labels: estadisticas.clientesTop.map(c => c.nombreCliente),
+                                            datasets: [
+                                                {
+                                                    label: 'Total gastado',
+                                                    data: estadisticas.clientesTop.map(c => c.totalGastado),
+                                                    backgroundColor: 'rgba(234, 179, 8, 0.5)',
+                                                    borderColor: 'rgb(234, 179, 8)',
+                                                    borderWidth: 1,
+                                                }
+                                            ]
+                                        }}
+                                        options={{
+                                            responsive: true,
+                                            maintainAspectRatio: false,
+                                            plugins: {
+                                                legend: {
+                                                    display: false,
+                                                },
+                                                tooltip: {
+                                                    callbacks: {
+                                                        label: function(context) {
+                                                            return 'Gastado: $' + context.raw.toFixed(2);
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            scales: {
+                                                y: {
+                                                    beginAtZero: true,
+                                                    ticks: {
+                                                        callback: function(value) {
+                                                            return '$' + value;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -294,7 +470,8 @@ function AdminEstadisticas() {
                                     <tr>
                                         <th className="px-5 py-3">Mes</th>
                                         <th className="px-5 py-3">Producto</th>
-                                        <th className="px-5 py-3">Kilos vendidos</th>
+                                        <th className="px-5 py-3">Kilos estimados</th>
+                                        <th className="px-5 py-3">Kilos entregados</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -306,8 +483,11 @@ function AdminEstadisticas() {
                                             <td className="px-5 py-3">
                                                 {venta.producto}
                                             </td>
-                                            <td className="px-5 py-3 font-semibold">
-                                                {venta.kilosVendidos?.toFixed(2)} kg
+                                            <td className="px-5 py-3">
+                                                {venta.kilosEstimados?.toFixed(2)} kg
+                                            </td>
+                                            <td className="px-5 py-3 font-semibold text-green-600">
+                                                {venta.kilosEntregados?.toFixed(2)} kg
                                             </td>
                                         </tr>
                                     ))}
@@ -317,6 +497,61 @@ function AdminEstadisticas() {
                             <p className="p-5 text-gray-500">
                                 No hay datos de ventas por producto para el mes seleccionado.
                             </p>
+                        )}
+
+                        {ventasPorProductoMesFiltradas?.length > 0 && (
+                            <div className="p-5 border-t border-gray-200">
+                                <h3 className="text-lg font-semibold text-gray-800 mb-4">Gráfico de ventas por producto y mes</h3>
+                                <div className="h-80">
+                                    <Bar
+                                        data={{
+                                            labels: ventasPorProductoMesFiltradas.map(v => v.producto),
+                                            datasets: [
+                                                {
+                                                    label: 'Kilos estimados',
+                                                    data: ventasPorProductoMesFiltradas.map(v => v.kilosEstimados),
+                                                    backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                                                    borderColor: 'rgb(59, 130, 246)',
+                                                    borderWidth: 1,
+                                                },
+                                                {
+                                                    label: 'Kilos entregados',
+                                                    data: ventasPorProductoMesFiltradas.map(v => v.kilosEntregados),
+                                                    backgroundColor: 'rgba(34, 197, 94, 0.5)',
+                                                    borderColor: 'rgb(34, 197, 94)',
+                                                    borderWidth: 1,
+                                                }
+                                            ]
+                                        }}
+                                        options={{
+                                            responsive: true,
+                                            maintainAspectRatio: false,
+                                            plugins: {
+                                                legend: {
+                                                    position: 'top',
+                                                },
+                                                tooltip: {
+                                                    callbacks: {
+                                                        label: function(context) {
+                                                            return context.dataset.label + ': ' + context.raw.toFixed(2) + ' kg';
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            scales: {
+                                                y: {
+                                                    beginAtZero: true,
+                                                    ticks: {
+                                                        callback: function(value) {
+                                                            return value + ' kg';
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }}
+                                    />
+                                </div>
+                            </div>
                         )}
                     </div>
                 )}

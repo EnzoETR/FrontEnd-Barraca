@@ -40,6 +40,7 @@ export default function Carrito() {
     });
 
 const [numeroAutomatico, setNumeroAutomatico] = useState(false);
+const [creandoPedido, setCreandoPedido] = useState(false);
 
     const actualizarCarrito = (nuevoCarrito) => {
         setCarrito(nuevoCarrito);
@@ -355,6 +356,10 @@ const [numeroAutomatico, setNumeroAutomatico] = useState(false);
     const crearPedido = async (e) => {
         e.preventDefault();
 
+        if (creandoPedido) return;
+
+        setCreandoPedido(true);
+
         try {
             const faltaTipoUso = carrito.some((item) =>
                 item.usaTipoUso &&
@@ -368,6 +373,7 @@ const [numeroAutomatico, setNumeroAutomatico] = useState(false);
                     detail: "Seleccione el tipo de uso en todos los productos.",
                     life: 3000
                 });
+                setCreandoPedido(false);
                 return;
             }
 
@@ -403,6 +409,7 @@ const [numeroAutomatico, setNumeroAutomatico] = useState(false);
                     detail: "Seleccione un horario de entrega.",
                     life: 3000
                 });
+                setCreandoPedido(false);
                 return;
             }
 
@@ -414,6 +421,7 @@ const [numeroAutomatico, setNumeroAutomatico] = useState(false);
                         detail: "Seleccione una dirección.",
                         life: 3000
                     });
+                    setCreandoPedido(false);
                     return;
                 }
 
@@ -433,6 +441,7 @@ const [numeroAutomatico, setNumeroAutomatico] = useState(false);
                         detail: "Complete todos los datos obligatorios.",
                         life: 3000
                     });
+                    setCreandoPedido(false);
                     return;
                 }
 
@@ -491,6 +500,8 @@ const [numeroAutomatico, setNumeroAutomatico] = useState(false);
                 detail: "No se pudo crear el pedido.",
                 life: 3000
             });
+        } finally {
+            setCreandoPedido(false);
         }
     };
 
@@ -740,9 +751,10 @@ const [numeroAutomatico, setNumeroAutomatico] = useState(false);
 
                                 <button
                                     type="submit"
-                                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-bold"
+                                    disabled={creandoPedido}
+                                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-bold disabled:bg-gray-400 disabled:cursor-not-allowed"
                                 >
-                                    Confirmar Pedido
+                                    {creandoPedido ? "Creando pedido..." : "Confirmar Pedido"}
                                 </button>
                             </div>
                         </form>

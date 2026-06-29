@@ -49,8 +49,8 @@ export default function FormRegistro() {
         throw new Error(data.mensaje || "No se pudo registrar el usuario");
       }
 
-
-      navigate(rutaPorRol(datos.roles), { replace: true });
+      const data = await response.json();
+      navigate(rutaPorRol(data.roles), { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {

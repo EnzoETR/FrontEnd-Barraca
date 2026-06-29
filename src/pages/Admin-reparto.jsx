@@ -39,8 +39,10 @@ function AdminReparto() {
 
     const armarDireccion = (pedido) => {
         const partes = [pedido.calle, pedido.numeroCasa].filter(Boolean);
-        return `${partes.join(" ")}, Paysandú, Uruguay`;
+        return `${partes.join(" ")}, Young, Departamento de Río Negro`;
     };
+
+    const DIRECCION_ORIGEN = "al Norte pegado a planta de silos Copagran, Cam. de Tropas, 65100 Young, Departamento de Río Negro";
 
     const construirUrlMapa = (rutaPedidos) => {
         if (!rutaPedidos?.length) {
@@ -50,12 +52,12 @@ function AdminReparto() {
         const direcciones = rutaPedidos.map((pedido) => armarDireccion(pedido));
         const url = new URL("https://www.google.com/maps/dir/");
         url.searchParams.set("api", "1");
-        url.searchParams.set("origin", direcciones[0]);
+        url.searchParams.set("origin", DIRECCION_ORIGEN);
         url.searchParams.set("destination", direcciones[direcciones.length - 1]);
         url.searchParams.set("travelmode", "driving");
 
-        if (direcciones.length > 2) {
-            url.searchParams.set("waypoints", direcciones.slice(1, -1).join("|"));
+        if (direcciones.length > 1) {
+            url.searchParams.set("waypoints", direcciones.slice(0, -1).join("|"));
         }
 
         return url.toString();
@@ -111,6 +113,12 @@ function AdminReparto() {
         setMensaje("Optimizando el orden de las paradas...");
 
         try {
+            const coordsOrigen = await geocodificarDireccion(DIRECCION_ORIGEN);
+
+            if (!coordsOrigen) {
+                throw new Error("No se pudo ubicar el punto de partida");
+            }
+
             const resultados = await Promise.all(
                 seleccionados.map(async (pedido) => ({
                     pedido,
@@ -127,8 +135,7 @@ function AdminReparto() {
 
             const rutaOptimizada = [];
             const pendientes = [...conCoordenadas];
-            let actual = pendientes.shift();
-            rutaOptimizada.push(actual.pedido);
+            let actual = { coords: coordsOrigen };
 
             while (pendientes.length > 0) {
                 let siguienteIndex = 0;
@@ -230,6 +237,9 @@ function AdminReparto() {
                                     <p>No seleccionaste ningún pedido.</p>
                                 ) : (
                                     <ol>
+                                        <li style={{ marginBottom: "0.35rem" }}>
+                                            <strong>Punto de partida:</strong> al Norte pegado a planta de silos Copagran, Cam. de Tropas, 65100 Young
+                                        </li>
                                         {seleccionados.map((pedido, index) => (
                                             <li key={pedido.idPedido} style={{ marginBottom: "0.35rem" }}>
                                                 <strong>Parada {index + 1}:</strong> {pedido.calle} {pedido.numeroCasa}
@@ -242,13 +252,7 @@ function AdminReparto() {
 
                             {mapUrl ? (
                                 <div>
-                                    <h3 style={{ marginBottom: "0.5rem" }}>Vista previa del mapa</h3>
-                                    <iframe
-                                        title="Vista previa de ruta"
-                                        src={mapUrl}
-                                        style={{ width: "100%", minHeight: "420px", border: "1px solid #d1d5db", borderRadius: "12px" }}
-                                        loading="lazy"
-                                    />
+                                    
                                     <div style={{ marginTop: "0.75rem" }}>
                                         <Button
                                             label="Abrir en Google Maps"
