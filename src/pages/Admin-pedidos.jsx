@@ -169,7 +169,8 @@ function AdminPedidos() {
     const totalPages = Math.ceil(pedidosFiltrados.length / itemsPerPage);
 
     const getStatusColor = (estado) => {
-        switch (estado) {
+        const estadoNormalizado = estado?.toString().trim().toLowerCase();
+        switch (estadoNormalizado) {
             case "en_espera":
                 return "bg-yellow-400 text-black";
             case "en_preparacion":
@@ -178,13 +179,16 @@ function AdminPedidos() {
                 return "bg-green-400 text-black";
             case "rechazado":
                 return "bg-red-400 text-black";
+            case "en_viaje":
+                return "bg-purple-400 text-black";
             default:
                 return "bg-gray-400 text-black";
         }
     };
 
     const formatearEstado = (estado) => {
-        switch (estado) {
+        const estadoNormalizado = estado?.toString().trim().toLowerCase();
+        switch (estadoNormalizado) {
             case "en_espera":
                 return "En espera";
             case "en_preparacion":
